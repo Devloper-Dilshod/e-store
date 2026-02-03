@@ -1,0 +1,56 @@
+# Database
+protected/data/*.sqlite
+protected/data/*.db
+
+# Cache
+protected/cache/*
+!protected/cache/.gitkeep
+
+# Logs
+*.log
+error_log
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Composer
+vendor/
+composer.lock
+
+# Node modules (if using)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build files
+dist/
+build/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Test files
+test_*.html
+test_*.php
