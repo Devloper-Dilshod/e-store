@@ -93,6 +93,12 @@ try {
         price REAL
     )");
 
+    $pdo->exec("CREATE TABLE IF NOT EXISTS bot_state (
+        chat_id TEXT PRIMARY KEY,
+        state TEXT,
+        temp_data TEXT
+    )");
+
     $pdo->exec("CREATE TABLE IF NOT EXISTS admins (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         chat_id TEXT UNIQUE,
