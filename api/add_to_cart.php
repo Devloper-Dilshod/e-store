@@ -1,8 +1,7 @@
 <?php
 require_once '../core/config.php';
 
-// Auth Check
-if (!isset($_SESSION['user_id'])) { header("Location: ../login.php"); exit; }
+// Auth Check - Removed for guests
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CSRF Check (Optional for cart add, but good practice. 

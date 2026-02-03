@@ -20,8 +20,10 @@
                 
                 <!-- Product Image (Clickable) -->
                 <a hx-get="product.php?id=<?= $p['id'] ?>" hx-target="#page-content" hx-push-url="true" class="block">
-                    <div class="aspect-[4/5] md:aspect-square rounded-[2rem] overflow-hidden bg-white mb-4 flex items-center justify-center p-3 relative group-hover:bg-slate-50 transition-colors duration-500" x-data="{ loaded: false }">
-                        <div class="absolute inset-0 skeleton z-20" x-show="!loaded"></div>
+                    <div class="aspect-[4/5] md:aspect-square rounded-[2rem] overflow-hidden bg-white mb-4 flex items-center justify-center p-3 relative group-hover:bg-slate-50 transition-colors duration-500" 
+                         x-data="{ loaded: false }"
+                         x-init="$nextTick(() => { if($el.querySelector('img').complete) loaded = true; })">
+                        <div class="absolute inset-0 skeleton z-20" x-show="!loaded" x-transition.opacity.duration.500ms></div>
                         <img src="image.php?id=<?= $p['file_id'] ?>" 
                              @load="loaded = true"
                              class="w-full h-full object-contain group-hover:scale-110 transition duration-1000 ease-out relative z-10" 

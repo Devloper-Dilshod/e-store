@@ -2,6 +2,10 @@
 require_once 'core/config.php';
 require_once 'core/render.php';
 
+// Access Control
+// Access Control - Guests allowed
+
+
 // Prepare Cart Items
 $cart_items = [];
 $total_sum = 0;

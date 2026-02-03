@@ -1,12 +1,12 @@
 <?php
 require_once '../core/config.php';
 
-if (!isset($_SESSION['user_id']) || empty($_SESSION['cart'])) { header("Location: ../index.php"); exit; }
+if (empty($_SESSION['cart'])) { header("Location: ../index.php"); exit; }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf_token($_POST['csrf_token'] ?? '');
 
-    $user_id = $_SESSION['user_id'];
+    $user_id = $_SESSION['user_id'] ?? null;
     $name = clean_input($_POST['full_name'] ?? '');
     $phone = preg_replace('/[^0-9+]/', '', clean_input($_POST['phone'] ?? ''));
     if (!str_starts_with($phone, '+998')) {
@@ -61,12 +61,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $txt .= "🛒 Mahsulotlar:\n$msg\n";
         $txt .= "💰 Jami: <b>" . number_format($total_sum, 0, ',', ' ') . " so'm</b>";
         
+        $txt .= ($user_id ? "\n👤 Tizim orqali (ID: $user_id)" : "\n👤 GUEST (Ro'yxatdan o'tmagan)");
+        
         $kb = json_encode(['inline_keyboard'=>[[['text'=>'✅ Qabul qilish', 'callback_data'=>"adm_ok_$oid"],['text'=>'❌ Bekor qilish', 'callback_data'=>"adm_no_$oid"]]]]);
-        sendTelegram('sendMessage', ['chat_id'=>$admin_chat_id, 'text'=>$txt, 'parse_mode'=>'HTML', 'reply_markup'=>$kb]);
+        
+        $admin_ids = getAllAdminIds();
+        foreach ($admin_ids as $chat_id) {
+            sendTelegram('sendMessage', ['chat_id'=>$chat_id, 'text'=>$txt, 'parse_mode'=>'HTML', 'reply_markup'=>$kb]);
+        }
 
         $pdo->commit();
         unset($_SESSION['cart']);
-        header("Location: ../profile.php?message=success");
+        
+        if ($user_id) {
+            header("Location: ../profile.php?message=success");
+        } else {
+            header("Location: ../index.php?message=order_success");
+        }
 
     } catch (Exception $e) {
         if($pdo->inTransaction()) $pdo->rollBack();

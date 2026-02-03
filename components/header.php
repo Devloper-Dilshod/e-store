@@ -53,11 +53,14 @@
         .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: skeleton 1.5s infinite linear; }
         @keyframes skeleton { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        .nav-link-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .nav-link-hover:hover { transform: translateX(5px); }
+        .nav-link-hover { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .nav-link-hover:hover { transform: scale(1.05) translateX(8px); background: #f1f5f9; color: black; }
         .nav-link-hover:active { transform: scale(0.95); }
-        .nav-link-hover svg { transition: transform 0.3s ease; }
-        .nav-link-hover:hover svg { transform: scale(1.2); }
+        .nav-link-hover svg { transition: all 0.4s ease; }
+        .nav-link-hover:hover svg { transform: scale(1.2) rotate(-5deg); color: #000; }
+        
+        /* Mobile Nav Pulsing Effect */
+        .mobile-nav-active { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); border: 2px solid rgba(255,255,255,0.5); }
     </style>
 </head>
 <body class="antialiased selection:bg-black selection:text-white">
@@ -119,11 +122,13 @@
         <!-- Main Content Area -->
         <main class="flex-1 min-w-0 relative lg:ml-72">
             <!-- Mobile Header (Simplified) -->
-            <header class="lg:hidden flex items-center justify-between px-6 py-4 bg-white/90 backdrop-blur-2xl sticky top-0 z-40 border-b border-gray-100 shadow-sm">
-                <a hx-get="index.php" hx-target="#page-content" hx-push-url="true" class="text-2xl font-black tracking-tighter hover:opacity-70 transition">STORE.</a>
+            <header class="lg:hidden flex items-center justify-between px-6 py-4 bg-white/70 backdrop-blur-xl sticky top-0 z-40 border-b border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
+                <a hx-get="index.php" hx-target="#page-content" hx-push-url="true" class="text-2xl font-black tracking-tighter hover:opacity-70 transition group">
+                    <span class="inline-block group-hover:scale-110 transition">STORE.</span>
+                </a>
                 <div class="flex items-center gap-3">
-                    <a hx-get="search.php" hx-target="#page-content" hx-push-url="true" class="w-10 h-10 flex items-center justify-center text-slate-500 hover:text-black transition">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <a hx-get="search.php" hx-target="#page-content" hx-push-url="true" class="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-500 hover:text-black hover:bg-slate-100 transition active:scale-90">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </a>
                 </div>
             </header>

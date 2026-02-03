@@ -18,7 +18,7 @@ if (php_sapi_name() !== 'cli' && basename($_SERVER['PHP_SELF']) !== 'image.php')
 $db_file = __DIR__ . '/../protected/data/database.sqlite';
 
 // 3. Telegram API
-$telegram_bot_token = 'BOT_TOKEN';
+$telegram_bot_token = '8296282827:AAHDwFHR9Vj3WOGSsFsrWO4qMJk-BU5kmvY';
 $admin_chat_id = '7445142075'; 
 
 try {
@@ -93,11 +93,18 @@ try {
         price REAL
     )");
 
-    $pdo->exec("CREATE TABLE IF NOT EXISTS bot_state (
-        chat_id TEXT PRIMARY KEY,
-        state TEXT,
-        temp_data TEXT
+    $pdo->exec("CREATE TABLE IF NOT EXISTS admins (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        chat_id TEXT UNIQUE,
+        name TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
+    
+    // Auto-insert primary admin if table is empty
+    $chk = $pdo->query("SELECT COUNT(*) FROM admins")->fetchColumn();
+    if ($chk == 0 && isset($admin_chat_id)) {
+        $pdo->prepare("INSERT INTO admins (chat_id, name) VALUES (?, 'Super Admin')")->execute([$admin_chat_id]);
+    }
 
 } catch (Exception $e) {
     if (php_sapi_name() !== 'cli' && basename($_SERVER['PHP_SELF']) !== 'image.php') {
@@ -163,5 +170,20 @@ function getTelegramFileUrl($file_id) {
         return $url;
     }
     return 'assets/images/placeholder.png';
+}
+
+// 6. Admin Helpers
+function isUserAdmin($chat_id) {
+    global $pdo, $admin_chat_id;
+    if ($chat_id == $admin_chat_id) return true; // Always allow super admin
+    $stmt = $pdo->prepare("SELECT 1 FROM admins WHERE chat_id = ?");
+    $stmt->execute([$chat_id]);
+    return $stmt->fetchColumn();
+}
+
+function getAllAdminIds() {
+    global $pdo;
+    $stmt = $pdo->query("SELECT chat_id FROM admins");
+    return $stmt->fetchAll(PDO::FETCH_COLUMN);
 }
 ?>

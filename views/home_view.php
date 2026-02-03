@@ -1,3 +1,22 @@
+<?php if(isset($_GET['message']) && $_GET['message'] === 'order_success'): ?>
+<div class="max-w-7xl mx-auto px-4 mt-6">
+    <div class="bg-green-500 text-white p-6 rounded-[2rem] shadow-xl shadow-green-500/20 flex items-center justify-between animate__animated animate__backInDown">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <div>
+                <h3 class="font-black uppercase tracking-tight leading-none">Buyurtma qabul qilindi!</h3>
+                <p class="text-xs font-bold opacity-80 uppercase tracking-widest mt-1">Tez orada operatorlarimiz bog'lanishadi.</p>
+            </div>
+        </div>
+        <button onclick="this.parentElement.remove()" class="hover:rotate-90 transition-transform p-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Smaller Horizontal Categories -->
 <div class="max-w-7xl mx-auto px-4 mb-10 mt-6">
     <div class="overflow-x-auto no-scrollbar flex gap-4 py-2">

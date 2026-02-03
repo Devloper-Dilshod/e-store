@@ -8,7 +8,7 @@ function handleUpdate($update) {
         $text = $update['message']['text'] ?? '';
         $photo = $update['message']['photo'] ?? null;
 
-        if ($chat_id != $admin_chat_id) {
+        if (!isUserAdmin($chat_id)) {
             sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "⛔ Kirish taqiqlangan."]);
             return;
         }
@@ -28,6 +28,34 @@ function handleUpdate($update) {
         switch ($state) {
             case 'MAIN_MENU':
                 handleMainMenu($chat_id, $text);
+                break;
+            
+            // --- ADMIN MANAGMENT ---
+            case 'ADD_ADMIN_ID':
+                $new_id = null; $new_name = "Admin";
+                
+                if (isset($update['message']['forward_from'])) {
+                    $new_id = $update['message']['forward_from']['id'];
+                    $new_name = $update['message']['forward_from']['first_name'];
+                } elseif (isset($update['message']['contact'])) {
+                    $new_id = $update['message']['contact']['user_id'];
+                    $new_name = $update['message']['contact']['first_name'];
+                } elseif (is_numeric($text)) {
+                    $new_id = $text;
+                }
+                
+                if ($new_id) {
+                    // Check if exists
+                    if (isUserAdmin($new_id)) {
+                        sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "⚠️ Bu foydalanuvchi allaqochon admin."]);
+                    } else {
+                        $pdo->prepare("INSERT INTO admins (chat_id, name) VALUES (?, ?)")->execute([$new_id, $new_name]);
+                        sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "✅ Yangi admin qo'shildi: $new_name ($new_id)"]);
+                    }
+                    setState($chat_id, 'MAIN_MENU'); showAdminMenu($chat_id);
+                } else {
+                    sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "❌ ID aniqlanmadi. Qayta urinib ko'ring yoki '🔙 Orqaga' ni bosing."]);
+                }
                 break;
 
             // --- ADD CATEGORY ---
@@ -159,6 +187,13 @@ function handleMainMenu($chat_id, $text) {
         case '📂 Kategoriya qo\'shish': setState($chat_id, 'ADD_CAT_NAME'); sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "📛 Nom:", 'reply_markup' => json_encode(['keyboard' => [[['text' => '🏠 Menyuga']]], 'resize_keyboard' => true])]); break;
         case '📝 Tahrirlash': listAdminItems($chat_id, 'edit', 0); break;
         case '📊 Statistika': showStatistics($chat_id); break;
+        case '👥 Adminlar': showAdminMenu($chat_id); break;
+        case '➕ Admin qo\'shish': 
+            setState($chat_id, 'ADD_ADMIN_ID'); 
+            sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "🆔 Yangi adminning Telegram ID sini yuboring yoki uning xabarini shu yerga forward qiling:", 'reply_markup' => json_encode(['keyboard' => [[['text' => '🔙 Orqaga']]], 'resize_keyboard' => true])]); 
+            break;
+        case '➖ Admin o\'chirish': listAdmins($chat_id, true); break;
+        case '📋 Adminlar ro\'yxati': listAdmins($chat_id, false); break;
         case '🔍 Qidiruv': setState($chat_id, 'SEARCH_PROD'); sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "🔍 Qidirish uchun mahsulot nomini kiriting:"]); break;
         case '🖼 Poster qo\'shish': setState($chat_id, 'ADD_POSTER_IMG'); sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "📸 Rasm yuboring:"]); break;
         case '🗑 O\'chirish': 
@@ -178,7 +213,7 @@ function showMainMenu($chat_id) {
         [['text' => '➕ Mahsulot qo\'shish'], ['text' => '📂 Kategoriya qo\'shish']], 
         [['text' => '📝 Tahrirlash'], ['text' => '🔍 Qidiruv']], 
         [['text' => '📊 Statistika'], ['text' => '🖼 Poster qo\'shish']],
-        [['text' => '🗑 O\'chirish']]
+        [['text' => '👥 Adminlar'], ['text' => '🗑 O\'chirish']]
     ], 'resize_keyboard' => true];
     sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "🛠 <b>ADMIN PANEL</b>", 'parse_mode' => 'HTML', 'reply_markup' => json_encode($kb)]);
 }
@@ -260,9 +295,70 @@ function handleCallback($cb) {
     elseif(strpos($data, 'adm_del_cat_') === 0) { $id = substr($data, 12); $pdo->prepare("DELETE FROM categories WHERE id = ?")->execute([$id]); sendTelegram('deleteMessage', ['chat_id' => $chat_id, 'message_id' => $mid]); }
     elseif(strpos($data, 'adm_del_pst_') === 0) { $id = substr($data, 12); $pdo->prepare("DELETE FROM posters WHERE id = ?")->execute([$id]); sendTelegram('deleteMessage', ['chat_id' => $chat_id, 'message_id' => $mid]); }
     
-    elseif(strpos($data, 'adm_ok_') === 0) { $id = substr($data, 7); $pdo->prepare("UPDATE orders SET status = 'accepted' WHERE id = ?")->execute([$id]); sendTelegram('editMessageText', ['chat_id' => $chat_id, 'message_id' => $mid, 'text' => "✅ #$id ta'sdiqlandi."]); }
-    elseif(strpos($data, 'adm_no_') === 0) { $id = substr($data, 7); $pdo->prepare("UPDATE orders SET status = 'rejected' WHERE id = ?")->execute([$id]); sendTelegram('editMessageText', ['chat_id' => $chat_id, 'message_id' => $mid, 'text' => "❌ #$id bekor qilindi."]); }
+    // --- ADMIN MANAGEMENT ---
+    elseif(strpos($data, 'adm_rm_') === 0) {
+        $rm_id = substr($data, 7);
+        if ($rm_id == $chat_id) {
+             sendTelegram('answerCallbackQuery', ['callback_query_id' => $cb['id'], 'text' => "O'zingizni o'chira olmaysiz!", 'show_alert' => true]);
+        } else {
+            $pdo->prepare("DELETE FROM admins WHERE chat_id = ?")->execute([$rm_id]);
+            sendTelegram('deleteMessage', ['chat_id' => $chat_id, 'message_id' => $mid]);
+            sendTelegram('answerCallbackQuery', ['callback_query_id' => $cb['id'], 'text' => "Admin o'chirildi."]);
+        }
+    }
+
+    // --- ORDER HANDLING (SAFE) ---
+    elseif(strpos($data, 'adm_ok_') === 0) { 
+        $id = substr($data, 7);
+        $order = $pdo->query("SELECT status FROM orders WHERE id = $id")->fetch();
+        if ($order['status'] !== 'pending') {
+            sendTelegram('answerCallbackQuery', ['callback_query_id' => $cb['id'], 'text' => "⚠️ Bu buyurtma allaqochon " . ($order['status'] == 'accepted' ? "tasdiqlangan" : "bekor qilingan") . "!", 'show_alert' => true]);
+            // Update message to reflect status if possible (optional simplification)
+            sendTelegram('editMessageReplyMarkup', ['chat_id'=>$chat_id, 'message_id'=>$mid, 'reply_markup'=>json_encode(['inline_keyboard'=>[]])]); 
+        } else {
+            $pdo->prepare("UPDATE orders SET status = 'accepted' WHERE id = ?")->execute([$id]); 
+            sendTelegram('editMessageText', ['chat_id' => $chat_id, 'message_id' => $mid, 'text' => "✅ #$id ta'sdiqlandi."]); 
+        }
+    }
+    elseif(strpos($data, 'adm_no_') === 0) { 
+        $id = substr($data, 7); 
+        $order = $pdo->query("SELECT status FROM orders WHERE id = $id")->fetch();
+        if ($order['status'] !== 'pending') {
+            sendTelegram('answerCallbackQuery', ['callback_query_id' => $cb['id'], 'text' => "⚠️ Bu buyurtma allaqochon " . ($order['status'] == 'accepted' ? "tasdiqlangan" : "bekor qilingan") . "!", 'show_alert' => true]);
+             sendTelegram('editMessageReplyMarkup', ['chat_id'=>$chat_id, 'message_id'=>$mid, 'reply_markup'=>json_encode(['inline_keyboard'=>[]])]);
+        } else {
+            $pdo->prepare("UPDATE orders SET status = 'rejected' WHERE id = ?")->execute([$id]); 
+            sendTelegram('editMessageText', ['chat_id' => $chat_id, 'message_id' => $mid, 'text' => "❌ #$id bekor qilindi."]); 
+        }
+    }
     elseif(strpos($data, 'adm_del_prd_') === 0) { $id = substr($data, 12); $pdo->prepare("DELETE FROM products WHERE id = ?")->execute([$id]); sendTelegram('answerCallbackQuery', ['callback_query_id' => $cb['id'], 'text' => "O'chirildi!"]); sendTelegram('deleteMessage', ['chat_id' => $chat_id, 'message_id' => $mid]); }
+}
+
+function showAdminMenu($chat_id) {
+    $kb = ['keyboard' => [
+        [['text' => '➕ Admin qo\'shish'], ['text' => '➖ Admin o\'chirish']],
+        [['text' => '📋 Adminlar ro\'yxati'], ['text' => '🏠 Menyuga']]
+    ], 'resize_keyboard' => true];
+    sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "👥 <b>Adminlar boshqaruvi</b>", 'parse_mode' => 'HTML', 'reply_markup' => json_encode($kb)]);
+}
+
+function listAdmins($chat_id, $for_delete = false) {
+    global $pdo;
+    $admins = $pdo->query("SELECT * FROM admins")->fetchAll();
+    
+    if ($for_delete) {
+        $kb = [];
+        foreach($admins as $a) {
+            $kb[] = [['text' => "❌ " . $a['name'] . " (" . $a['chat_id'] . ")", 'callback_data' => "adm_rm_" . $a['chat_id']]];
+        }
+        sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "O'chirish uchun adminni tanlang:", 'reply_markup' => json_encode(['inline_keyboard' => $kb])]);
+    } else {
+        $txt = "📋 <b>Adminlar ro'yxati:</b>\n\n";
+        foreach($admins as $a) {
+            $txt .= "👤 <b>" . $a['name'] . "</b> [" . $a['chat_id'] . "]\n";
+        }
+        sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => $txt, 'parse_mode' => 'HTML']);
+    }
 }
 
 function showCategorySelector($chat_id, $page = 0, $mid = null) {

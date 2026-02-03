@@ -27,8 +27,9 @@
         
         <!-- Image Section -->
         <div class="space-y-4">
-            <div @click="showViewer = true" class="aspect-square glass rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/60 flex items-center justify-center p-4 relative cursor-zoom-in group">
-                <div class="absolute inset-0 skeleton z-20" x-show="!loaded"></div>
+            <div @click="showViewer = true" class="aspect-square glass rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/60 flex items-center justify-center p-4 relative cursor-zoom-in group"
+                 x-init="$nextTick(() => { if($el.querySelector('img').complete) loaded = true; })">
+                <div class="absolute inset-0 skeleton z-20" x-show="!loaded" x-transition.opacity.duration.500ms></div>
                 <img :src="currentImage" 
                      @load="loaded = true"
                      x-show="loaded"

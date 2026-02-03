@@ -40,6 +40,7 @@
                     'accepted' => ['TASDIQLANDI', 'bg-green-100 text-green-700 border-green-200'],
                     'delivered' => ['YETKAZILDI', 'bg-blue-100 text-blue-700 border-blue-200'],
                     'cancelled' => ['BEKOR QILINDI', 'bg-red-100 text-red-700 border-red-200'],
+                    'rejected' => ['BEKOR QILINDI', 'bg-red-100 text-red-700 border-red-200'],
                     'Pending' => ['KUTILMOQDA', 'bg-yellow-100 text-yellow-700 border-yellow-200'],
                     'Accepted' => ['TASDIQLANDI', 'bg-green-100 text-green-700 border-green-200'],
                     'Delivered' => ['YETKAZILDI', 'bg-blue-100 text-blue-700 border-blue-200'],

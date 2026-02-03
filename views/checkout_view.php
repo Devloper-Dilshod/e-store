@@ -1,5 +1,12 @@
 <div class="max-w-xl mx-auto bg-white p-6 md:p-8 rounded-[2.5rem] shadow-xl border border-gray-100">
-    <h1 class="text-3xl font-black mb-6 text-center tracking-tighter uppercase">Tasdiqlash</h1>
+    <div class="mb-8 text-center">
+        <h1 class="text-3xl font-black tracking-tighter uppercase mb-2">Tasdiqlash</h1>
+        <?php if($user): ?>
+            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Xush kelibsiz, <?= htmlspecialchars($user['name']) ?>!</p>
+        <?php else: ?>
+            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest px-4 leading-relaxed">Buyurtma uchun ma'lumotlaringizni kiriting</p>
+        <?php endif; ?>
+    </div>
     
     <form action="api/place_order.php" method="POST" class="space-y-6">
         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
@@ -7,7 +14,7 @@
         <div class="space-y-2">
             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-4">Ismingiz</label>
             <input type="text" name="full_name" required 
-                   value="<?= htmlspecialchars($user['full_name'] ?? '') ?>"
+                   value="<?= htmlspecialchars($user['name'] ?? '') ?>"
                    placeholder="Ismingizni kiriting"
                    class="w-full bg-slate-50 border-none rounded-[1.5rem] px-6 py-4 outline-none focus:ring-2 focus:ring-black transition-all font-medium">
         </div>
@@ -22,6 +29,7 @@
         <div class="space-y-2">
             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-4">Telefon raqam</label>
             <input type="tel" name="phone" required 
+                   value="<?= htmlspecialchars($user['phone'] ?? '+998') ?>"
                    placeholder="+998 90 123 45 67"
                    class="w-full bg-slate-50 border-none rounded-[1.5rem] px-6 py-4 outline-none focus:ring-2 focus:ring-black transition-all font-medium">
         </div>

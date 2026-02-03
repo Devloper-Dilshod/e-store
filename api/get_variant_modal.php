@@ -22,14 +22,14 @@ if (empty($variants)) {
 }
 
 ?>
-<div id="variant-modal" class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 px-0 py-0 animate__animated animate__fadeIn" style="background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);">
-    <div class="bg-white w-full sm:w-[450px] sm:rounded-[2.5rem] rounded-t-[2.5rem] shadow-2xl overflow-hidden relative animate__animated animate__slideInUp animate__faster"
-         @click.outside="document.getElementById('variant-modal').remove()">
+<div id="variant-modal-centered" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; display: grid; place-items: center; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);">
+    <div class="bg-white w-full max-w-[450px] rounded-[2.5rem] shadow-2xl overflow-hidden relative animate__animated animate__zoomIn animate__faster"
+         @click.outside="document.getElementById('variant-modal-centered').remove()">
         
         <!-- Header -->
         <div class="relative h-48 bg-slate-100">
             <img src="image.php?id=<?= $product['file_id'] ?>" class="w-full h-full object-contain p-4 mix-blend-multiply">
-            <button onclick="document.getElementById('variant-modal').remove()" class="absolute top-4 right-4 w-8 h-8 bg-black/5 rounded-full flex items-center justify-center hover:bg-black hover:text-white transition">
+            <button onclick="document.getElementById('variant-modal-centered').remove()" class="absolute top-4 right-4 w-8 h-8 bg-black/5 rounded-full flex items-center justify-center hover:bg-black hover:text-white transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
@@ -40,7 +40,7 @@ if (empty($variants)) {
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Variant tanlang</p>
             </div>
 
-            <form hx-post="api/add_to_cart.php" hx-swap="outerHTML" hx-target="#variant-modal" class="space-y-6">
+            <form hx-post="api/add_to_cart.php" hx-swap="outerHTML" hx-target="#variant-modal-centered" class="space-y-6">
                 <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
                 
                 <div class="grid gap-3 max-h-[40vh] overflow-y-auto no-scrollbar pr-1">

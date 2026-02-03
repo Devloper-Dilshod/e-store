@@ -1,11 +1,13 @@
 <?php foreach($products as $p): ?>
 <div class="group relative animate__animated animate__fadeInUp">
-    <div class="glass rounded-[2.5rem] p-3 md:p-5 border border-white/60 relative overflow-hidden transition-all duration-300 hover:border-slate-200">
+    <div class="glass rounded-[2rem] p-2 md:p-5 border border-white/60 relative overflow-hidden transition-all duration-300 hover:border-slate-200">
         
         <!-- Product Image (Clickable) -->
         <a hx-get="product.php?id=<?= $p['id'] ?>" hx-target="#page-content" hx-push-url="true" class="block">
-            <div class="aspect-[4/5] md:aspect-square rounded-[2rem] overflow-hidden bg-white mb-4 flex items-center justify-center p-3 relative group-hover:bg-slate-50 transition-colors duration-500" x-data="{ prodLoaded: false }">
-                <div class="absolute inset-0 bg-slate-100 animate-pulse z-20" x-show="!prodLoaded"></div>
+            <div class="aspect-square rounded-[1.8rem] overflow-hidden bg-white mb-3 flex items-center justify-center p-2 relative group-hover:bg-slate-50 transition-colors duration-500" 
+                 x-data="{ prodLoaded: false }" 
+                 x-init="$nextTick(() => { if($el.querySelector('img').complete) prodLoaded = true; })">
+                <div class="absolute inset-0 bg-slate-100 animate-pulse z-20" x-show="!prodLoaded" x-transition.opacity.duration.500ms></div>
                 <img src="image.php?id=<?= $p['file_id'] ?>" 
                      @load="prodLoaded = true" 
                      class="w-full h-full object-contain group-hover:scale-110 transition duration-1000 ease-out relative z-10" loading="lazy" alt="<?= $p['name'] ?>">

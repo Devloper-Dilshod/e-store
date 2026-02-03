@@ -2,13 +2,16 @@
 require_once 'core/config.php';
 require_once 'core/render.php';
 
-if (!isset($_SESSION['user_id'])) { header("Location: login.php"); exit; }
+// Access Control - Guests allowed, but cart must not be empty
 if (empty($_SESSION['cart'])) { header("Location: index.php"); exit; }
 
-// Fetch user info for pre-fill
-$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-$stmt->execute([$_SESSION['user_id']]);
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
+// Fetch user info for pre-fill if logged in
+$user = null;
+if (isset($_SESSION['user_id'])) {
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+}
 
 // Calculate Total Sum
 $total_sum = 0;

@@ -136,10 +136,9 @@ if (isset($_SERVER['HTTP_HX_REQUEST'])) {
                 </div>
             </div>';
         
-        if(isset($_SESSION['user_id'])) {
-            echo '<a href="checkout.php" hx-get="checkout.php" hx-target="#page-content" hx-push-url="true" class="block w-full bg-black text-white text-center py-4 rounded-2xl font-black uppercase text-sm tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/20">Buyurtma berish</a>';
-        } else {
-            echo '<a href="login.php" hx-get="login.php" hx-target="#page-content" hx-push-url="true" class="block w-full bg-black text-white text-center py-4 rounded-2xl font-black uppercase text-sm tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/20">Kirish va Buyurtma</a>';
+        echo '<a href="checkout.php" hx-get="checkout.php" hx-target="#page-content" hx-push-url="true" class="block w-full bg-black text-white text-center py-4 rounded-2xl font-black uppercase text-sm tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/20">Buyurtma berish</a>';
+        if(!isset($_SESSION['user_id'])) {
+            echo '<p class="mt-4 text-[10px] text-slate-400 font-bold text-center uppercase tracking-widest">Mehmon bo\'lib buyurtma berish mumkin</p>';
         }
         
         echo '</div></div>';
