@@ -5,7 +5,7 @@
         <!-- Product Image (Clickable) -->
         <a hx-get="product.php?id=<?= $p['id'] ?>" hx-target="#page-content" hx-push-url="true" class="block">
             <div class="aspect-[4/5] md:aspect-square rounded-[2rem] overflow-hidden bg-white mb-4 flex items-center justify-center p-3 relative group-hover:bg-slate-50 transition-colors duration-500" x-data="{ prodLoaded: false }">
-                <div class="absolute inset-0 skeleton z-20" x-show="!prodLoaded"></div>
+                <div class="absolute inset-0 bg-slate-100 animate-pulse z-20" x-show="!prodLoaded"></div>
                 <img src="image.php?id=<?= $p['file_id'] ?>" 
                      @load="prodLoaded = true" 
                      class="w-full h-full object-contain group-hover:scale-110 transition duration-1000 ease-out relative z-10" loading="lazy" alt="<?= $p['name'] ?>">
@@ -22,13 +22,22 @@
                     <span class="text-[9px] text-slate-400 font-black uppercase tracking-widest leading-none mb-1">Narx</span>
                     <span class="text-sm md:text-lg font-black text-black"><?= number_format($p['base_price'], 0, ',', ' ') ?> <span class="text-[10px]">so'm</span></span>
                 </div>
-                <!-- Real-time Add Button (Standalone) -->
+                <!-- Real-time Add Button (Standalone or Modal) -->
+                <?php if($p['variant_count'] > 0): ?>
+                <button hx-get="api/get_variant_modal.php?id=<?= $p['id'] ?>" 
+                        hx-target="body" 
+                        hx-swap="beforeend"
+                        class="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-black text-white flex items-center justify-center hover:scale-110 active:scale-90 transition-all cursor-pointer shadow-2xl shadow-black/20 group">
+                    <svg class="w-5 h-5 md:w-7 md:h-7 group-active:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                </button>
+                <?php else: ?>
                 <button hx-post="api/add_to_cart.php" 
                         hx-vals='{"product_id": <?= $p['id'] ?>, "quantity": 1}'
                         hx-swap="none"
                         class="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-black text-white flex items-center justify-center hover:scale-110 active:scale-90 transition-all cursor-pointer shadow-2xl shadow-black/20 group">
                     <svg class="w-5 h-5 md:w-7 md:h-7 group-active:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                 </button>
+                <?php endif; ?>
             </div>
         </div>
     </div>

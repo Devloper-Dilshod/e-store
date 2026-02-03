@@ -1,12 +1,18 @@
 <div class="max-w-4xl mx-auto space-y-12 animate__animated animate__fadeIn">
     <!-- User Profile Header (Minimalist Screenshot Style) -->
     <div class="px-4 py-8 flex items-center gap-6">
+        <?php 
+        $display_name = isset($_SESSION['user_name']) && !empty($_SESSION['user_name']) 
+            ? $_SESSION['user_name'] 
+            : (isset($_SESSION['phone']) ? $_SESSION['phone'] : 'Foydalanuvchi');
+        $first_letter = mb_substr($display_name, 0, 1);
+        ?>
         <div class="w-16 h-16 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-900 text-xl font-black shadow-sm shrink-0">
-            <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
+            <?= strtoupper($first_letter) ?>
         </div>
         <div class="flex-1 min-w-0">
             <h1 class="text-sm md:text-base font-black uppercase tracking-[0.2em] text-slate-400 truncate leading-none">
-                <?= htmlspecialchars($_SESSION['user_name']) ?>
+                <?= htmlspecialchars($display_name) ?>
             </h1>
         </div>
         <a href="api/logout.php" hx-boost="false" class="text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-600 transition"> Chiqish </a>
@@ -30,14 +36,14 @@
             <div class="grid gap-6">
                 <?php 
                 $statusMap = [
-                    'pending' => ['KUTILMOQDA', 'text-orange-500'],
-                    'accepted' => ['QABUL QILINDI', 'text-blue-500'],
-                    'delivered' => ['YETKAZILDI', 'text-green-500'],
-                    'cancelled' => ['BEKOR QILINDI', 'text-red-500'],
-                    'Pending' => ['KUTILMOQDA', 'text-orange-500'],
-                    'Accepted' => ['QABUL QILINDI', 'text-blue-500'],
-                    'Delivered' => ['YETKAZILDI', 'text-green-500'],
-                    'Cancelled' => ['BEKOR QILINDI', 'text-red-500']
+                    'pending' => ['KUTILMOQDA', 'bg-yellow-100 text-yellow-700 border-yellow-200'],
+                    'accepted' => ['TASDIQLANDI', 'bg-green-100 text-green-700 border-green-200'],
+                    'delivered' => ['YETKAZILDI', 'bg-blue-100 text-blue-700 border-blue-200'],
+                    'cancelled' => ['BEKOR QILINDI', 'bg-red-100 text-red-700 border-red-200'],
+                    'Pending' => ['KUTILMOQDA', 'bg-yellow-100 text-yellow-700 border-yellow-200'],
+                    'Accepted' => ['TASDIQLANDI', 'bg-green-100 text-green-700 border-green-200'],
+                    'Delivered' => ['YETKAZILDI', 'bg-blue-100 text-blue-700 border-blue-200'],
+                    'Cancelled' => ['BEKOR QILINDI', 'bg-red-100 text-red-700 border-red-200']
                 ];
                 foreach($orders as $order): 
                     $orderImages = [];
@@ -71,7 +77,7 @@
                             <div class="space-y-1">
                                 <div class="flex items-center gap-3">
                                     <span class="bg-slate-100 text-slate-500 text-[10px] font-black px-2 py-0.5 rounded-lg uppercase shadow-sm">#<?= $order['id'] ?></span>
-                                    <span class="text-[10px] font-black <?= $s[1] ?> uppercase tracking-tighter"><?= $s[0] ?></span>
+                                    <span class="text-[10px] font-black px-2 py-1 rounded-lg border <?= $s[1] ?> uppercase tracking-tighter"><?= $s[0] ?></span>
                                 </div>
                                 <div class="text-lg md:text-2xl font-black text-slate-900 tracking-tighter leading-none"><?= number_format($order['total_price'], 0, ',', ' ') ?> <span class="text-xs font-bold text-slate-400">so'm</span></div>
                                 <div class="text-[10px] font-bold text-slate-300 uppercase tracking-widest"><?= date('d.m.Y', strtotime($order['created_at'])) ?></div>

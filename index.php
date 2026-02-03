@@ -15,7 +15,12 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY id DESC LIMIT 10")-
 $total_products = $pdo->query("SELECT COUNT(*) FROM products")->fetchColumn();
 $total_pages = ceil($total_products / $limit);
 
-$products = $pdo->prepare("SELECT * FROM products ORDER BY id DESC LIMIT ? OFFSET ?");
+$products = $pdo->prepare("
+    SELECT p.*, (SELECT COUNT(*) FROM product_variants WHERE product_id = p.id) as variant_count 
+    FROM products p 
+    ORDER BY p.id DESC 
+    LIMIT ? OFFSET ?
+");
 $products->bindValue(1, $limit, PDO::PARAM_INT);
 $products->bindValue(2, $offset, PDO::PARAM_INT);
 $products->execute();
