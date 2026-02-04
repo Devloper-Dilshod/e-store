@@ -70,7 +70,10 @@
         <!-- Sidebar (Desktop) - Fixed Position -->
         <aside id="main-sidebar" class="hidden lg:flex w-72 bg-white border-r border-gray-100 flex-col px-6 py-8 h-screen fixed top-0 left-0 z-50 shrink-0">
             <div class="mb-10 px-4">
-                <a href="index.php" class="text-3xl font-black tracking-tighter">E-STORE.</a>
+                <?php global $store_name; ?>
+                <a hx-get="index.php" hx-target="#page-content" hx-push-url="true" class="text-3xl font-black tracking-tighter uppercase whitespace-normal break-words leading-none">
+                    <?= htmlspecialchars($store_name) ?><span class="text-slate-200">.</span>
+                </a>
             </div>
 
             <nav class="space-y-3 flex-1">
@@ -93,8 +96,8 @@
                    :class="$store.nav.active == 'cart' ? 'bg-black text-white shadow-xl shadow-black/20' : 'hover:bg-gray-100 text-gray-400 hover:text-black'"
                    @click="$store.nav.active = 'cart'">
                     <div class="relative">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                        <span id="cart-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-black animate__animated animate__bounceIn <?= empty($_SESSION['cart']) ? 'hidden' : '' ?>">
+                        <svg class="w-5 h-5 transition-transform" :class="$store.nav.active == 'cart' ? 'scale-110' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                        <span id="cart-badge" class="absolute -top-2.5 -right-2.5 bg-red-500 text-white text-[9px] w-5 h-5 rounded-full flex items-center justify-center font-black animate__animated animate__bounceIn border-2 border-white shadow-sm <?= empty($_SESSION['cart']) ? 'hidden' : '' ?>">
                             <?= count($_SESSION['cart'] ?? []) ?>
                         </span>
                     </div>
@@ -124,7 +127,8 @@
             <!-- Mobile Header (Simplified) -->
             <header class="lg:hidden flex items-center justify-between px-6 py-4 bg-white/70 backdrop-blur-xl sticky top-0 z-40 border-b border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
                 <a hx-get="index.php" hx-target="#page-content" hx-push-url="true" class="text-2xl font-black tracking-tighter hover:opacity-70 transition group">
-                    <span class="inline-block group-hover:scale-110 transition">STORE.</span>
+                    <?php global $store_name; ?>
+                    <span class="inline-block group-hover:scale-105 transition uppercase"><?= htmlspecialchars($store_name) ?>.</span>
                 </a>
                 <div class="flex items-center gap-3">
                     <a hx-get="search.php" hx-target="#page-content" hx-push-url="true" class="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-500 hover:text-black hover:bg-slate-100 transition active:scale-90">

@@ -9,11 +9,21 @@
 <?php else: ?>
 <div class="max-w-7xl mx-auto" x-data="{ 
     selectedVariant: <?= count($variants) > 0 ? $variants[0]['id'] : 'null' ?>,
+    hasDiscount: <?= $product['has_discount'] ? 'true' : 'false' ?>,
+    discountPercent: <?= (int)$product['discount_percent'] ?>,
     basePrice: <?= $product['base_price'] ?>,
     currentPrice: <?= count($variants) > 0 ? $variants[0]['price'] : $product['base_price'] ?>,
     currentImage: 'image.php?id=<?= (count($variants) > 0 && $variants[0]['file_id']) ? $variants[0]['file_id'] : $product['file_id'] ?>',
     showViewer: false,
     loaded: false,
+    
+    get displayPrice() {
+        if (!this.hasDiscount) return this.currentPrice;
+        // If it's the base product (no variant selected or match base), we can use the stored discount_price
+        // but for simplicity and consistency with variants, let's calculate using percentage
+        return Math.round(this.currentPrice * (1 - this.discountPercent / 100));
+    },
+
     updateVariant(id, price, imgId) {
         this.selectedVariant = id;
         this.currentPrice = price;
@@ -28,12 +38,22 @@
         <!-- Image Section -->
         <div class="space-y-4">
             <div @click="showViewer = true" class="aspect-square glass rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/60 flex items-center justify-center p-4 relative cursor-zoom-in group"
-                 x-init="$nextTick(() => { if($el.querySelector('img').complete) loaded = true; })">
-                <div class="absolute inset-0 skeleton z-20" x-show="!loaded" x-transition.opacity.duration.500ms></div>
+                 x-init="if($el.querySelector('img').complete) loaded = true">
+                <div class="absolute inset-0 skeleton z-20 transition-opacity duration-500" :class="loaded ? 'opacity-0 pointer-events-none' : 'opacity-100'"></div>
+                
+                <!-- Ribbon Discount Badge -->
+                <?php if($product['has_discount']): ?>
+                <div class="absolute -top-1 -right-1 z-40 w-32 h-32 overflow-hidden rounded-tr-[2.5rem]">
+                    <div class="absolute top-6 -right-10 w-40 py-1.5 bg-red-600 text-white text-xs font-black uppercase tracking-widest text-center rotate-45 shadow-xl shadow-red-500/40">
+                        -<?= $product['discount_percent'] ?>%
+                    </div>
+                </div>
+                <?php endif; ?>
+
                 <img :src="currentImage" 
                      @load="loaded = true"
-                     x-show="loaded"
-                     class="w-full h-full object-contain rounded-3xl transition-all duration-1000 group-hover:scale-110 ease-out relative z-10" alt="<?= $product['name'] ?>">
+                     class="w-full h-full object-contain rounded-3xl transition-all duration-1000 group-hover:scale-110 ease-out relative z-10" 
+                     :class="loaded ? 'opacity-100' : 'opacity-0'" alt="<?= $product['name'] ?>">
                 
                 <div class="absolute bottom-6 right-6 bg-black/50 backdrop-blur-md text-white p-3 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity z-30">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
@@ -64,12 +84,13 @@
             </div>
 
             <div class="flex items-center gap-4">
-                <div class="bg-black text-white px-8 py-4 rounded-[1.8rem] shadow-xl shadow-black/20">
-                    <span class="text-2xl font-black tracking-tight" x-text="new Intl.NumberFormat().format(currentPrice) + ' so\'m'"></span>
+                <div class="bg-black text-white px-8 py-4 rounded-[1.8rem] shadow-xl shadow-black/20 flex flex-col">
+                    <span x-show="hasDiscount" x-cloak class="text-xs text-slate-400 line-through decoration-red-400/50 mb-1" x-text="new Intl.NumberFormat().format(currentPrice)"></span>
+                    <span class="text-2xl font-black tracking-tight" x-text="new Intl.NumberFormat().format(displayPrice) + ' so\'m'"></span>
                 </div>
                 <?php if($product['has_discount']): ?>
-                <div class="bg-red-50 text-red-600 px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest animate-pulse">
-                    -<?= $product['discount_percent'] ?>% AKSIYA
+                <div class="bg-red-50 text-red-600 px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest animate-pulse border border-red-100">
+                    -<?= $product['discount_percent'] ?>% CHEGIRMA
                 </div>
                 <?php endif; ?>
             </div>
@@ -104,7 +125,8 @@
                     <button type="submit" 
                             @click="showSuccess = true; setTimeout(() => showSuccess = false, 2000)"
                             x-data="{ showSuccess: false }"
-                            class="w-full bg-black text-white py-6 rounded-[2rem] font-black uppercase text-xs tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-black/30 flex items-center justify-center gap-3 relative overflow-hidden group">
+                            hx-disabled-elt="this"
+                            class="w-full bg-black text-white py-6 rounded-[2rem] font-black uppercase text-xs tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-black/30 flex items-center justify-center gap-3 relative overflow-hidden group disabled:opacity-70 disabled:cursor-not-allowed">
                         <span x-show="!showSuccess" class="flex items-center gap-3 relative z-10 transition-transform group-active:translate-y-1">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                             Savatchaga qo'shish

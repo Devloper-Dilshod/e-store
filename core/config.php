@@ -20,6 +20,7 @@ $db_file = __DIR__ . '/../protected/data/database.sqlite';
 // 3. Telegram API
 $telegram_bot_token = '8296282827:AAHDwFHR9Vj3WOGSsFsrWO4qMJk-BU5kmvY';
 $admin_chat_id = '7445142075'; 
+$store_name = 'G Store'; // Do'kon nomi shu yerda o'zgartiriladi
 
 try {
     $db_dir = dirname($db_file);
@@ -56,8 +57,12 @@ try {
         base_price REAL,
         file_id TEXT,
         has_discount INTEGER DEFAULT 0,
-        discount_percent INTEGER DEFAULT 0
+        discount_percent INTEGER DEFAULT 0,
+        discount_price REAL DEFAULT 0
     )");
+    
+    // Ensure discount_price exists (for existing databases)
+    try { $pdo->exec("ALTER TABLE products ADD COLUMN discount_price REAL DEFAULT 0"); } catch (Exception $e) {}
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS product_variants (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -191,5 +196,35 @@ function getAllAdminIds() {
     global $pdo;
     $stmt = $pdo->query("SELECT chat_id FROM admins");
     return $stmt->fetchAll(PDO::FETCH_COLUMN);
+}
+
+// 7. Notification Helpers
+function broadcastToAll($text, $file_id = null) {
+    global $pdo;
+    // Get all chat_ids from bot_state (users who interacted)
+    $stmt = $pdo->query("SELECT chat_id FROM bot_state");
+    $chat_ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    foreach ($chat_ids as $chat_id) {
+        try {
+            if ($file_id) {
+                sendTelegram('sendPhoto', [
+                    'chat_id' => $chat_id,
+                    'photo' => $file_id,
+                    'caption' => $text,
+                    'parse_mode' => 'HTML'
+                ]);
+            } else {
+                sendTelegram('sendMessage', [
+                    'chat_id' => $chat_id,
+                    'text' => $text,
+                    'parse_mode' => 'HTML'
+                ]);
+            }
+        } catch (Exception $e) {
+            // Log or ignore blocked users
+            error_log("Broadcast failed for $chat_id: " . $e->getMessage());
+        }
+    }
 }
 ?>

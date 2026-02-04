@@ -105,6 +105,15 @@ function handleUpdate($update) {
                 else { 
                     setState($chat_id, 'MAIN_MENU'); 
                     showMainMenu($chat_id); 
+                    
+                    // Push Notification for New Product
+                    $p_id = $temp_data['prod_id'];
+                    $p = $pdo->query("SELECT * FROM products WHERE id = $p_id")->fetch();
+                    $msg = "<b>🆕 YANGI MAHSULOT!</b>\n\n";
+                    $msg .= "🛍 <b>" . $p['name'] . "</b>\n";
+                    $msg .= "💰 Narxi: <b>" . number_format($p['base_price']) . " so'm</b>\n\n";
+                    $msg .= "🔗 <a href='https://t.me/Gstore_bot?start=prod_$p_id'>Batafsil ko'rish</a>";
+                    broadcastToAll($msg, $p['file_id']);
                 }
                 break;
             case 'ADD_VAR_NAME': $temp_data['var_name'] = $text; setState($chat_id, 'ADD_VAR_PRICE', $temp_data); sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "Narxi:"]); break;
@@ -161,16 +170,76 @@ function handleUpdate($update) {
                 break;
 
             case 'SEARCH_PROD':
-                $stmt = $pdo->prepare("SELECT id, name FROM products WHERE name LIKE ? LIMIT 10");
+                $page = $temp_data['page'] ?? 0;
+                $limit = 8;
+                $offset = $page * $limit;
+                
+                $stmt = $pdo->prepare("SELECT id, name FROM products WHERE name LIKE ? ORDER BY name ASC LIMIT $limit OFFSET $offset");
                 $stmt->execute(["%$text%"]);
                 $items = $stmt->fetchAll();
-                if(!$items) {
+                
+                $total_stmt = $pdo->prepare("SELECT COUNT(*) FROM products WHERE name LIKE ?");
+                $total_stmt->execute(["%$text%"]);
+                $total = $total_stmt->fetchColumn();
+
+                if(!$items && $page == 0) {
                     sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "❌ Hech narsa topilmadi. Qayta urinib ko'ring:"]);
                 } else {
                     $kb = [];
                     foreach($items as $i) $kb[] = [['text' => $i['name'], 'callback_data' => "pe_" . $i['id']]];
-                    sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "🔍 Topilgan mahsulotlar:", 'reply_markup' => json_encode(['inline_keyboard' => $kb])]);
-                    setState($chat_id, 'MAIN_MENU');
+                    
+                    $nav = [];
+                    if($page > 0) $nav[] = ['text' => '⬅️', 'callback_data' => "search_page_" . ($page-1)];
+                    if($total > $offset + $limit) $nav[] = ['text' => '➡️', 'callback_data' => "search_page_" . ($page+1)];
+                    if($nav) $kb[] = $nav;
+                    
+                    $msg = "🔍 Qidiruv natijalari ('$text'):" . ($nav ? "\nSahifa: " . ($page+1) : "");
+                    sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => $msg, 'reply_markup' => json_encode(['inline_keyboard' => $kb])]);
+                    
+                    // Store search query for pagination
+                    $temp_data['q'] = $text;
+                    $temp_data['page'] = $page;
+                    setState($chat_id, 'SEARCH_PROD_PAGE', $temp_data);
+                }
+                break;
+            case 'SEARCH_PROD_PAGE':
+                // Handled via callback
+                break;
+            
+            case 'WAIT_DISC_PCT':
+                if(is_numeric($text)) {
+                    $pid = $temp_data['id'];
+                    $stmt = $pdo->prepare("SELECT base_price FROM products WHERE id = ?");
+                    $stmt->execute([$pid]);
+                    $base_price = $stmt->fetchColumn();
+                    
+                    $pct = (int)$text;
+                    $new_price = $base_price - ($base_price * $pct / 100);
+                    
+                    $temp_data['pct'] = $pct;
+                    $temp_data['new_price'] = $new_price;
+                    
+                    setState($chat_id, 'WAIT_DISC_PRICE', $temp_data);
+                    sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "📉 Chegirma: $pct%\n💰 Hisoblangan narx: " . number_format($new_price) . " so'm\n\nYangi narxni tasdiqlang yoki boshqa narx kiriting:"]);
+                }
+                break;
+                
+            case 'WAIT_DISC_PRICE':
+                if(is_numeric($text)) {
+                    $pdo->prepare("UPDATE products SET has_discount = 1, discount_percent = ?, discount_price = ? WHERE id = ?")->execute([$temp_data['pct'], $text, $temp_data['id']]);
+                    sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "✅ Chegirma muvaffaqiyatli o'rnatildi!"]);
+                    setState($chat_id, 'MAIN_MENU'); showMainMenu($chat_id);
+                    
+                    // Push Notification for New Discount
+                    $p_id = $temp_data['id'];
+                    $p = $pdo->query("SELECT * FROM products WHERE id = $p_id")->fetch();
+                    $msg = "<b>🔥 KATTA CHEGIRMA!</b>\n\n";
+                    $msg .= "🛍 <b>" . $p['name'] . "</b>\n";
+                    $msg .= "❌ Eski narx: <del>" . number_format($p['base_price']) . "</del> so'm\n";
+                    $msg .= "✅ Yangi narx: <b>" . number_format($text) . " so'm</b>\n";
+                    $msg .= "💥 Tejamkorlik: <b>" . $p['discount_percent'] . "%</b>\n\n";
+                    $msg .= "🔗 <a href='https://t.me/Gstore_bot?start=prod_$p_id'>Hoziroq sotib olish</a>";
+                    broadcastToAll($msg, $p['file_id']);
                 }
                 break;
         }
@@ -247,6 +316,8 @@ function handleCallback($cb) {
         $kb = [
             [['text' => '📝 Nomni o\'zgartirish', 'callback_data' => "pe_name_$id"], ['text' => '💰 Narxni o\'zgartirish', 'callback_data' => "pe_price_$id"]],
             [['text' => '📄 Tavsifni o\'zgartirish', 'callback_data' => "pe_desc_$id"]],
+            [['text' => '🔥 Chegirma e\'lon qilish', 'callback_data' => "pe_disc_start_$id"]],
+            [['text' => '🛑 Chegirmani to\'xtatish', 'callback_data' => "pe_disc_stop_$id"]],
             [['text' => '➕ Variant qo\'shish', 'callback_data' => "ve_add_$id"]],
             [['text' => '⚙️ Variantlarni sozlash', 'callback_data' => "ve_list_$id"]],
             [['text' => '🗑 Mahsulotni o\'chirish', 'callback_data' => "adm_del_prd_$id"]],
@@ -332,6 +403,57 @@ function handleCallback($cb) {
         }
     }
     elseif(strpos($data, 'adm_del_prd_') === 0) { $id = substr($data, 12); $pdo->prepare("DELETE FROM products WHERE id = ?")->execute([$id]); sendTelegram('answerCallbackQuery', ['callback_query_id' => $cb['id'], 'text' => "O'chirildi!"]); sendTelegram('deleteMessage', ['chat_id' => $chat_id, 'message_id' => $mid]); }
+    
+    // Discount Callbacks
+    elseif(strpos($data, 'pe_disc_start_') === 0) {
+        $id = substr($data, 14);
+        setState($chat_id, 'WAIT_DISC_PCT', ['id' => $id]);
+        sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "🏷 Chegirma foizini kiriting (masalan: 20):"]);
+    }
+    elseif(strpos($data, 'pe_disc_stop_') === 0) {
+        $id = substr($data, 13);
+        $pdo->prepare("UPDATE products SET has_discount = 0, discount_percent = 0, discount_price = 0 WHERE id = ?")->execute([$id]);
+        sendTelegram('answerCallbackQuery', ['callback_query_id' => $cb['id'], 'text' => "Chegirma to'xtatildi!", 'show_alert' => true]);
+        // Refresh menu
+        $kb = [
+            [['text' => '📝 Nomni o\'zgartirish', 'callback_data' => "pe_name_$id"], ['text' => '💰 Narxni o\'zgartirish', 'callback_data' => "pe_price_$id"]],
+            [['text' => '📄 Tavsifni o\'zgartirish', 'callback_data' => "pe_desc_$id"]],
+            [['text' => '🔥 Chegirma e\'lon qilish', 'callback_data' => "pe_disc_start_$id"]],
+            [['text' => '🛑 Chegirmani to\'xtatish', 'callback_data' => "pe_disc_stop_$id"]],
+            [['text' => '➕ Variant qo\'shish', 'callback_data' => "ve_add_$id"]],
+            [['text' => '⚙️ Variantlarni sozlash', 'callback_data' => "ve_list_$id"]],
+            [['text' => '🗑 Mahsulotni o\'chirish', 'callback_data' => "adm_del_prd_$id"]],
+            [['text' => '🔙 Orqaga', 'callback_data' => 'adm_edit_list']]
+        ];
+        sendTelegram('editMessageText', ['chat_id' => $chat_id, 'message_id' => $mid, 'text' => "📦 <b>Mahsulot #$id sozlamalari:</b>\n(Chegirma to'xtatildi)", 'parse_mode' => 'HTML', 'reply_markup' => json_encode(['inline_keyboard' => $kb])]);
+    }
+    
+    // Search Pagination
+    elseif(strpos($data, 'search_page_') === 0) {
+        $page = (int)substr($data, 12);
+        $stmt = $pdo->prepare("SELECT state, temp_data FROM bot_state WHERE chat_id = ?"); $stmt->execute([$chat_id]);
+        $row = $stmt->fetch(); $temp = json_decode($row['temp_data'], true);
+        $text = $temp['q'] ?? '';
+        
+        $limit = 8; $offset = $page * $limit;
+        $stmt = $pdo->prepare("SELECT id, name FROM products WHERE name LIKE ? ORDER BY name ASC LIMIT $limit OFFSET $offset");
+        $stmt->execute(["%$text%"]); $items = $stmt->fetchAll();
+        $total_stmt = $pdo->prepare("SELECT COUNT(*) FROM products WHERE name LIKE ?");
+        $total_stmt->execute(["%$text%"]); $total = $total_stmt->fetchColumn();
+
+        $kb = [];
+        foreach($items as $i) $kb[] = [['text' => $i['name'], 'callback_data' => "pe_" . $i['id']]];
+        $nav = [];
+        if($page > 0) $nav[] = ['text' => '⬅️', 'callback_data' => "search_page_" . ($page-1)];
+        if($total > $offset + $limit) $nav[] = ['text' => '➡️', 'callback_data' => "search_page_" . ($page+1)];
+        if($nav) $kb[] = $nav;
+
+        $temp['page'] = $page;
+        setState($chat_id, 'SEARCH_PROD_PAGE', $temp);
+        
+        $msg = "🔍 Qidiruv natijalari ('$text'):" . ($nav ? "\nSahifa: " . ($page+1) : "");
+        sendTelegram('editMessageText', ['chat_id' => $chat_id, 'message_id' => $mid, 'text' => $msg, 'reply_markup' => json_encode(['inline_keyboard' => $kb])]);
+    }
 }
 
 function showAdminMenu($chat_id) {

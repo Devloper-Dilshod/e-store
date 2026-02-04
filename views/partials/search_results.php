@@ -20,15 +20,27 @@
                 
                 <!-- Product Image (Clickable) -->
                 <a hx-get="product.php?id=<?= $p['id'] ?>" hx-target="#page-content" hx-push-url="true" class="block">
-                    <div class="aspect-[4/5] md:aspect-square rounded-[2rem] overflow-hidden bg-white mb-4 flex items-center justify-center p-3 relative group-hover:bg-slate-50 transition-colors duration-500" 
+                    <div class="aspect-[4/5] md:aspect-square rounded-[2rem] overflow-hidden bg-white mb-4 flex items-center justify-center p-3 relative group-hover:bg-slate-50 transition-all duration-500" 
                          x-data="{ loaded: false }"
-                         x-init="$nextTick(() => { if($el.querySelector('img').complete) loaded = true; })">
-                        <div class="absolute inset-0 skeleton z-20" x-show="!loaded" x-transition.opacity.duration.500ms></div>
+                         x-init="if($el.querySelector('img').complete) loaded = true">
+                        
+                        <!-- Skeleton Loader -->
+                        <div class="absolute inset-0 skeleton z-20 transition-opacity duration-700" 
+                             :class="loaded ? 'opacity-0 pointer-events-none' : 'opacity-100'"></div>
+                        
+                        <!-- Ribbon Discount Badge -->
+                        <?php if($p['has_discount']): ?>
+                        <div class="absolute -top-1 -right-1 z-40 w-24 h-24 overflow-hidden rounded-tr-[2rem]">
+                            <div class="absolute top-4 -right-8 w-32 py-1 bg-red-600 text-white text-[10px] font-black uppercase tracking-tighter text-center rotate-45 shadow-lg shadow-red-500/40">
+                                -<?= $p['discount_percent'] ?>%
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
                         <img src="image.php?id=<?= $p['file_id'] ?>" 
                              @load="loaded = true"
                              class="w-full h-full object-contain group-hover:scale-110 transition duration-1000 ease-out relative z-10" 
-                             x-show="loaded"
-                             loading="lazy" alt="<?= $p['name'] ?>">
+                             :class="loaded ? 'opacity-100' : 'opacity-0'" alt="<?= $p['name'] ?>">
                     </div>
                 </a>
                 
@@ -41,13 +53,23 @@
                     <div class="flex items-center justify-between gap-1">
                         <div class="flex flex-col">
                             <span class="text-[9px] text-slate-400 font-black uppercase tracking-widest">Narx</span>
-                            <span class="text-sm md:text-lg font-black text-black"><?= number_format($p['base_price']) ?> <span class="text-[10px]">so'm</span></span>
+                            <?php if($p['has_discount']): ?>
+                                <div class="flex flex-col leading-none">
+                                    <span class="text-[10px] text-slate-300 line-through decoration-red-400/30 font-bold italic mb-0.5"><?= number_format($p['base_price']) ?></span>
+                                    <span class="text-base md:text-xl font-black text-red-600 tracking-tighter">
+                                        <?= number_format($p['discount_price']) ?> <span class="text-[10px]">so'm</span>
+                                    </span>
+                                </div>
+                            <?php else: ?>
+                                <span class="text-base md:text-xl font-black text-slate-900 tracking-tighter"><?= number_format($p['base_price']) ?> <span class="text-[10px]">so'm</span></span>
+                            <?php endif; ?>
                         </div>
                         <!-- Real-time Add Button (Standalone) -->
                         <button hx-post="api/add_to_cart.php" 
                                 hx-vals='{"product_id": <?= $p['id'] ?>, "quantity": 1}'
                                 hx-swap="none"
-                                class="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-black text-white flex items-center justify-center hover:scale-110 active:scale-90 transition-all cursor-pointer shadow-2xl shadow-black/20 group">
+                                hx-disabled-elt="this"
+                                class="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-black text-white flex items-center justify-center hover:scale-110 active:scale-90 transition-all cursor-pointer shadow-2xl shadow-black/20 group disabled:opacity-50 disabled:cursor-not-allowed">
                             <svg class="w-5 h-5 md:w-7 md:h-7 group-active:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                         </button>
                     </div>
@@ -60,7 +82,7 @@
     <!-- Load More Button -->
     <?php if($current_page < $total_pages): ?>
     <div id="pagination-container" class="flex justify-center pt-16 pb-4">
-        <button hx-get="search.php?q=<?= urlencode($query) ?>&cat=<?= $cat_id ?>&page=<?= $current_page + 1 ?>" 
+        <button hx-get="search.php?q=<?= urlencode($query) ?>&cat=<?= $cat_id ?>&sort=<?= $sort ?>&page=<?= $current_page + 1 ?>" 
                 hx-target="#pagination-container" 
                 hx-swap="outerHTML"
                 class="group relative bg-white border border-slate-200 px-12 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all duration-500 shadow-xl shadow-slate-100 flex items-center gap-4 active:scale-95">

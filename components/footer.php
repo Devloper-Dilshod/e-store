@@ -15,12 +15,12 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </a>
                 <a hx-get="cart.php" hx-target="#page-content" hx-push-url="true" 
-                   class="flex flex-col items-center justify-center w-14 h-14 rounded-3xl transition-all duration-300 relative active:scale-90"
-                   :class="$store.nav.active == 'cart' ? 'bg-black text-white shadow-xl shadow-black/30 scale-110 mobile-nav-active' : 'text-slate-400 hover:text-black hover:bg-slate-50'"
+                   class="flex flex-col items-center justify-center w-14 h-14 rounded-3xl transition-all duration-300 relative active:scale-95"
+                   :class="$store.nav.active == 'cart' ? 'bg-black text-white shadow-xl shadow-black/30 scale-105 mobile-nav-active' : 'text-slate-400 hover:text-black hover:bg-slate-50'"
                    @click="$store.nav.active = 'cart'">
                    <div class="relative">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                        <span id="cart-badge-mobile" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] w-4.5 h-4.5 rounded-full flex items-center justify-center font-black animate__animated animate__bounceIn <?= empty($_SESSION['cart']) ? 'hidden' : '' ?>">
+                        <svg class="w-6 h-6 transition-transform" :class="$store.nav.active == 'cart' ? 'scale-110' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                        <span id="cart-badge-mobile" class="absolute -top-2.5 -right-2.5 bg-red-500 text-white text-[9px] w-5 h-5 rounded-full flex items-center justify-center font-black animate__animated animate__bounceIn border-2 border-white shadow-lg <?= empty($_SESSION['cart']) ? 'hidden' : '' ?>">
                             <?= count($_SESSION['cart'] ?? []) ?>
                         </span>
                    </div>
@@ -43,7 +43,12 @@
                 // Sync navigation when HTMX changes the URL or content
                 const syncNav = () => {
                     const path = window.location.pathname;
-                    const page = path.split('/').pop().split('?')[0].replace('.php', '') || 'index';
+                    const segments = path.split('/');
+                    let page = segments.pop() || 'index.php';
+                    if (page === segments[segments.length - 1]) page = 'index.php'; // Handle trailing slashes or roots
+                    page = page.split('?')[0].replace('.php', '');
+                    if (!page || page === 'Store') page = 'index'; // Adjustment for subdirectory
+                    
                     if (window.Alpine) {
                         Alpine.store('nav').active = page;
                     }
@@ -58,6 +63,9 @@
                         syncNav();
                     }
                 });
+                
+                // Initial sync
+                document.addEventListener('DOMContentLoaded', syncNav);
             </script>
         </main>
     </div>

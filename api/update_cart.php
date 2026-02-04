@@ -69,8 +69,8 @@ if (isset($_SERVER['HTTP_HX_REQUEST'])) {
     
     // Update cart badge count
     $count = count($_SESSION['cart'] ?? []);
-    echo "<span id='cart-badge' class='badge-update absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-black animate__animated animate__bounceIn' style='" . ($count > 0 ? '' : 'display: none !important;') . "' hx-swap-oob='outerHTML'>$count</span>";
-    echo "<span id='cart-badge-mobile' class='badge-update absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-black animate__animated animate__bounceIn' style='" . ($count > 0 ? '' : 'display: none !important;') . "' hx-swap-oob='outerHTML'>$count</span>";
+    echo "<span id='cart-badge' class='badge-update absolute -top-2.5 -right-2.5 bg-red-500 text-white text-[9px] w-5 h-5 rounded-full flex items-center justify-center font-black animate__animated animate__bounceIn border-2 border-white shadow-sm' style='" . ($count > 0 ? '' : 'display: none !important;') . "' hx-swap-oob='outerHTML'>$count</span>";
+    echo "<span id='cart-badge-mobile' class='badge-update absolute -top-2.5 -right-2.5 bg-red-500 text-white text-[9px] w-5 h-5 rounded-full flex items-center justify-center font-black animate__animated animate__bounceIn border-2 border-white shadow-lg' style='" . ($count > 0 ? '' : 'display: none !important;') . "' hx-swap-oob='outerHTML'>$count</span>";
     
     // Return updated cart container
     if (empty($cart_items)) {

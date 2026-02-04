@@ -38,7 +38,7 @@ if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
             }
 
             if ($product['has_discount'] && $product['discount_percent'] > 0) {
-                 $price = $price * (1 - $product['discount_percent']/100);
+                 $price = round($price * (1 - $product['discount_percent']/100));
             }
 
             $line_total = $price * $qty;

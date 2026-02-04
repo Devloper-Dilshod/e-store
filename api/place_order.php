@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 
-                if($p['has_discount']) $price *= (1-$p['discount_percent']/100);
+                if($p['has_discount']) $price = round($price * (1-$p['discount_percent']/100));
                 $total_sum += $price * $qty;
                 $items[] = [$pid, $vid, $qty, $price];
                 $msg .= "▫️ $pname$variant_str x $qty\n";

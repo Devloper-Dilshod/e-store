@@ -31,13 +31,13 @@ if (isset($_SERVER['HTTP_HX_REQUEST'])) {
     
     // Update Desktop badge
     echo "<span id='cart-badge' 
-                class='badge-update absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-black animate__animated animate__bounceIn' 
+                class='badge-update absolute -top-2.5 -right-2.5 bg-red-500 text-white text-[9px] w-5 h-5 rounded-full flex items-center justify-center font-black animate__animated animate__bounceIn border-2 border-white shadow-sm' 
                 style='$hidden' 
                 hx-swap-oob='outerHTML'>$count</span>";
     
     // Update Mobile badge
     echo "<span id='cart-badge-mobile' 
-                class='badge-update absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-black animate__animated animate__bounceIn' 
+                class='badge-update absolute -top-2.5 -right-2.5 bg-red-500 text-white text-[9px] w-5 h-5 rounded-full flex items-center justify-center font-black animate__animated animate__bounceIn border-2 border-white shadow-lg' 
                 style='$hidden' 
                 hx-swap-oob='outerHTML'>$count</span>";
     exit;

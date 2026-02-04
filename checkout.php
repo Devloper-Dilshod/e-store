@@ -36,7 +36,7 @@ foreach ($_SESSION['cart'] as $item) {
         }
 
         if ($product['has_discount'] && $product['discount_percent'] > 0) {
-            $price = $price * (1 - $product['discount_percent']/100);
+            $price = round($price * (1 - $product['discount_percent']/100));
         }
 
         $total_sum += ($price * $qty);
