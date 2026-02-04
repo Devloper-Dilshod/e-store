@@ -112,8 +112,8 @@ function handleUpdate($update) {
                     $msg = "<b>🆕 YANGI MAHSULOT!</b>\n\n";
                     $msg .= "🛍 <b>" . $p['name'] . "</b>\n";
                     $msg .= "💰 Narxi: <b>" . number_format($p['base_price']) . " so'm</b>\n\n";
-                    $msg .= "🔗 <a href='https://t.me/Gstore_bot?start=prod_$p_id'>Batafsil ko'rish</a>";
-                    broadcastToAll($msg, $p['file_id']);
+                    $url = "product.php?id=$p_id";
+                    broadcastToAll($msg, $p['file_id'], $url);
                 }
                 break;
             case 'ADD_VAR_NAME': $temp_data['var_name'] = $text; setState($chat_id, 'ADD_VAR_PRICE', $temp_data); sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "Narxi:"]); break;
@@ -238,8 +238,8 @@ function handleUpdate($update) {
                     $msg .= "❌ Eski narx: <del>" . number_format($p['base_price']) . "</del> so'm\n";
                     $msg .= "✅ Yangi narx: <b>" . number_format($text) . " so'm</b>\n";
                     $msg .= "💥 Tejamkorlik: <b>" . $p['discount_percent'] . "%</b>\n\n";
-                    $msg .= "🔗 <a href='https://t.me/Gstore_bot?start=prod_$p_id'>Hoziroq sotib olish</a>";
-                    broadcastToAll($msg, $p['file_id']);
+                    $url = "product.php?id=$p_id";
+                    broadcastToAll($msg, $p['file_id'], $url);
                 }
                 break;
         }
@@ -311,25 +311,57 @@ function handleCallback($cb) {
 
     // --- EDIT FLOW ---
     elseif($data === 'adm_edit_list') listAdminItems($chat_id, 'edit', 0, $mid);
-    elseif(strpos($data, 'pe_') === 0) {
-        $id = substr($data, 3);
-        $kb = [
-            [['text' => '📝 Nomni o\'zgartirish', 'callback_data' => "pe_name_$id"], ['text' => '💰 Narxni o\'zgartirish', 'callback_data' => "pe_price_$id"]],
-            [['text' => '📄 Tavsifni o\'zgartirish', 'callback_data' => "pe_desc_$id"]],
-            [['text' => '🔥 Chegirma e\'lon qilish', 'callback_data' => "pe_disc_start_$id"]],
-            [['text' => '🛑 Chegirmani to\'xtatish', 'callback_data' => "pe_disc_stop_$id"]],
-            [['text' => '➕ Variant qo\'shish', 'callback_data' => "ve_add_$id"]],
-            [['text' => '⚙️ Variantlarni sozlash', 'callback_data' => "ve_list_$id"]],
-            [['text' => '🗑 Mahsulotni o\'chirish', 'callback_data' => "adm_del_prd_$id"]],
-            [['text' => '🔙 Orqaga', 'callback_data' => 'adm_edit_list']]
-        ];
-        sendTelegram('editMessageText', ['chat_id' => $chat_id, 'message_id' => $mid, 'text' => "📦 <b>Mahsulot #$id sozlamalari:</b>", 'parse_mode' => 'HTML', 'reply_markup' => json_encode(['inline_keyboard' => $kb])]);
-    }
     
-    // Edit Product Properties
+    // Most specific edits first to avoid generic pe_ matching
     elseif(strpos($data, 'pe_name_') === 0) { $id = substr($data, 8); setState($chat_id, 'EDIT_PROD_NAME', ['id' => $id]); sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "Yangi nomni kiriting:"]); }
     elseif(strpos($data, 'pe_price_') === 0) { $id = substr($data, 9); setState($chat_id, 'EDIT_PROD_PRICE', ['id' => $id]); sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "Yangi narxni kiriting:"]); }
     elseif(strpos($data, 'pe_desc_') === 0) { $id = substr($data, 8); setState($chat_id, 'EDIT_PROD_DESC', ['id' => $id]); sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "Yangi tavsifni kiriting:"]); }
+    elseif(strpos($data, 'pe_disc_start_') === 0) {
+        $id = substr($data, 14);
+        setState($chat_id, 'WAIT_DISC_PCT', ['id' => $id]);
+        sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "🏷 Chegirma foizini kiriting (masalan: 20):"]);
+    }
+    elseif(strpos($data, 'pe_disc_stop_') === 0) {
+        $id = substr($data, 13);
+        $pdo->prepare("UPDATE products SET has_discount = 0, discount_percent = 0, discount_price = 0 WHERE id = ?")->execute([$id]);
+        sendTelegram('answerCallbackQuery', ['callback_query_id' => $cb['id'], 'text' => "Chegirma to'xtatildi!", 'show_alert' => true]);
+        
+        // Refresh product settings
+        $data = "pe_$id"; 
+        goto pe_label; // Re-use the pe_ logic to refresh menu
+    }
+    elseif(strpos($data, 'pe_') === 0) {
+        pe_label:
+        $id = (strpos($data, 'pe_') === 0) ? substr($data, 3) : $id;
+        $stmt = $pdo->prepare("SELECT has_discount FROM products WHERE id = ?");
+        $stmt->execute([$id]);
+        $has_discount = $stmt->fetchColumn();
+
+        $kb = [
+            [['text' => '📝 Nomni o\'zgartirish', 'callback_data' => "pe_name_$id"], ['text' => '💰 Narxni o\'zgartirish', 'callback_data' => "pe_price_$id"]],
+            [['text' => '📄 Tavsifni o\'zgartirish', 'callback_data' => "pe_desc_$id"]],
+        ];
+
+        if ($has_discount) {
+            $kb[] = [['text' => '🛑 Chegirmani to\'xtatish', 'callback_data' => "pe_disc_stop_$id"]];
+        } else {
+            $kb[] = [['text' => '🔥 Chegirma e\'lon qilish', 'callback_data' => "pe_disc_start_$id"]];
+        }
+
+        $kb[] = [['text' => '➕ Variant qo\'shish', 'callback_data' => "ve_add_$id"]];
+        $kb[] = [['text' => '⚙️ Variantlarni sozlash', 'callback_data' => "ve_list_$id"]];
+        $kb[] = [['text' => '🗑 Mahsulotni o\'chirish', 'callback_data' => "adm_del_prd_$id"]];
+        $kb[] = [['text' => '🔙 Orqaga', 'callback_data' => 'adm_edit_list']];
+
+        $status_text = $has_discount ? "\n(Hozir: CHEGIRMADA 🔥)" : "";
+        sendTelegram('editMessageText', [
+            'chat_id' => $chat_id, 
+            'message_id' => $mid, 
+            'text' => "📦 <b>Mahsulot #$id sozlamalari:</b>$status_text", 
+            'parse_mode' => 'HTML', 
+            'reply_markup' => json_encode(['inline_keyboard' => $kb])
+        ]);
+    }
 
     // Variant Management
     elseif(strpos($data, 've_add_') === 0) {
@@ -404,29 +436,7 @@ function handleCallback($cb) {
     }
     elseif(strpos($data, 'adm_del_prd_') === 0) { $id = substr($data, 12); $pdo->prepare("DELETE FROM products WHERE id = ?")->execute([$id]); sendTelegram('answerCallbackQuery', ['callback_query_id' => $cb['id'], 'text' => "O'chirildi!"]); sendTelegram('deleteMessage', ['chat_id' => $chat_id, 'message_id' => $mid]); }
     
-    // Discount Callbacks
-    elseif(strpos($data, 'pe_disc_start_') === 0) {
-        $id = substr($data, 14);
-        setState($chat_id, 'WAIT_DISC_PCT', ['id' => $id]);
-        sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "🏷 Chegirma foizini kiriting (masalan: 20):"]);
-    }
-    elseif(strpos($data, 'pe_disc_stop_') === 0) {
-        $id = substr($data, 13);
-        $pdo->prepare("UPDATE products SET has_discount = 0, discount_percent = 0, discount_price = 0 WHERE id = ?")->execute([$id]);
-        sendTelegram('answerCallbackQuery', ['callback_query_id' => $cb['id'], 'text' => "Chegirma to'xtatildi!", 'show_alert' => true]);
-        // Refresh menu
-        $kb = [
-            [['text' => '📝 Nomni o\'zgartirish', 'callback_data' => "pe_name_$id"], ['text' => '💰 Narxni o\'zgartirish', 'callback_data' => "pe_price_$id"]],
-            [['text' => '📄 Tavsifni o\'zgartirish', 'callback_data' => "pe_desc_$id"]],
-            [['text' => '🔥 Chegirma e\'lon qilish', 'callback_data' => "pe_disc_start_$id"]],
-            [['text' => '🛑 Chegirmani to\'xtatish', 'callback_data' => "pe_disc_stop_$id"]],
-            [['text' => '➕ Variant qo\'shish', 'callback_data' => "ve_add_$id"]],
-            [['text' => '⚙️ Variantlarni sozlash', 'callback_data' => "ve_list_$id"]],
-            [['text' => '🗑 Mahsulotni o\'chirish', 'callback_data' => "adm_del_prd_$id"]],
-            [['text' => '🔙 Orqaga', 'callback_data' => 'adm_edit_list']]
-        ];
-        sendTelegram('editMessageText', ['chat_id' => $chat_id, 'message_id' => $mid, 'text' => "📦 <b>Mahsulot #$id sozlamalari:</b>\n(Chegirma to'xtatildi)", 'parse_mode' => 'HTML', 'reply_markup' => json_encode(['inline_keyboard' => $kb])]);
-    }
+    // Discount Callbacks handled above for better flow
     
     // Search Pagination
     elseif(strpos($data, 'search_page_') === 0) {

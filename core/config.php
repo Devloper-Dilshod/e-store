@@ -104,6 +104,23 @@ try {
         temp_data TEXT
     )");
 
+    $pdo->exec("CREATE TABLE IF NOT EXISTS notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT,
+        body TEXT,
+        icon TEXT,
+        url TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS push_subscriptions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        endpoint TEXT UNIQUE,
+        p256dh TEXT,
+        auth TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
     $pdo->exec("CREATE TABLE IF NOT EXISTS admins (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         chat_id TEXT UNIQUE,
@@ -199,8 +216,21 @@ function getAllAdminIds() {
 }
 
 // 7. Notification Helpers
-function broadcastToAll($text, $file_id = null) {
+function broadcastToAll($text, $file_id = null, $url = null) {
     global $pdo;
+
+    // A. Internal Web Notifications (Picked up by polling)
+    $stmt = $pdo->prepare("INSERT INTO notifications (title, body, icon, url) VALUES (?, ?, ?, ?)");
+    $title = str_contains($text, 'CHEGIRMA') ? '🔥 KATTA CHEGIRMA!' : '🆕 YANGI MAHSULOT!';
+    $clean_body = strip_tags(str_replace(['<br>', '<br/>', '\n'], ' ', $text));
+    $stmt->execute([
+        $title,
+        mb_substr($clean_body, 0, 100),
+        $file_id ? "image.php?id=$file_id" : 'assets/images/logo.png',
+        $url
+    ]);
+
+    // B. Telegram Broadcast
     // Get all chat_ids from bot_state (users who interacted)
     $stmt = $pdo->query("SELECT chat_id FROM bot_state");
     $chat_ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -222,9 +252,8 @@ function broadcastToAll($text, $file_id = null) {
                 ]);
             }
         } catch (Exception $e) {
-            // Log or ignore blocked users
             error_log("Broadcast failed for $chat_id: " . $e->getMessage());
         }
     }
 }
-?>
+ ?>

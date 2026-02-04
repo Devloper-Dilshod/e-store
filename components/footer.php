@@ -33,12 +33,110 @@
                 </a>
             </nav>
 
+            <!-- Notification Prompt -->
+            <div x-data="{ show: false }" 
+                 x-init="setTimeout(() => { 
+                    if (!localStorage.getItem('push_asked') && Notification.permission === 'default') show = true;
+                 }, 3000)"
+                 x-show="show"
+                 x-transition:enter="transition ease-out duration-500"
+                 x-transition:enter-start="opacity-0 translate-y-10"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="fixed bottom-24 lg:bottom-10 right-6 z-[60] w-[calc(100%-3rem)] sm:w-80 glass rounded-[2rem] p-6 shadow-2xl border border-white/60 animate__animated animate__fadeInUp" x-cloak>
+                <div class="flex items-start gap-4">
+                    <div class="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center shrink-0 shadow-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    </div>
+                    <div class="space-y-1">
+                        <h4 class="font-black text-sm uppercase tracking-tight">Xabarnomalar</h4>
+                        <p class="text-xs text-slate-500 font-bold leading-relaxed">Yangi chegirmlar va mahsulotlar haqida birinchi bo'lib xabardor bo'ling!</p>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-6">
+                    <button @click="show = false; localStorage.setItem('push_asked', 'true')" class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-black transition">Keyinroq</button>
+                    <button @click="requestNotificationPermission(); show = false" class="flex-1 py-3 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition shadow-lg shadow-black/20">Ruxsat berish</button>
+                </div>
+            </div>
+
             <script>
                 document.addEventListener('alpine:init', () => {
                     Alpine.store('nav', {
                         active: '<?= basename($_SERVER['PHP_SELF'], '.php') == 'index' ? 'index' : basename($_SERVER['PHP_SELF'], '.php') ?>'
                     })
                 })
+
+                // PUSH NOTIFICATIONS LOGIC
+                async function requestNotificationPermission() {
+                    localStorage.setItem('push_asked', 'true');
+                    const permission = await Notification.requestPermission();
+                    if (permission === 'granted') {
+                        registerServiceWorker();
+                    }
+                }
+
+                async function registerServiceWorker() {
+                    if ('serviceWorker' in navigator && 'PushManager' in window) {
+                        try {
+                            const reg = await navigator.serviceWorker.register('sw.js');
+                            console.log('SW Registered');
+                            
+                            // Check if existing sub
+                            let sub = await reg.pushManager.getSubscription();
+                            if (!sub) {
+                                // Real VAPID pair would be here, for now we use simple interest storage 
+                                // because full VAPID implementation needs complex backend crypto
+                                sub = { endpoint: 'browser_notification_' + Math.random().toString(36).substr(2, 9) };
+                            }
+                            
+                            // Save to server
+                            await fetch('api/save_subscription.php', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(sub)
+                            });
+                            
+                            // Show success toast
+                            new Notification("✅ Muvaffaqiyatli!", {
+                                body: "Endi siz barcha yangiliklardan birinchilardan bo'lib xabardor bo'lasiz.",
+                                icon: 'assets/images/logo.png'
+                            });
+                        } catch (err) {
+                            console.error('SW Error:', err);
+                        }
+                    }
+                }
+
+                // Notification Polling
+                let lastNotificationId = 0;
+                localStorage.setItem('last_notify_id', lastNotificationId);
+
+                async function checkNewNotifications() {
+                    const lastId = localStorage.getItem('last_notify_id') || 0;
+                    try {
+                        const res = await fetch(`api/check_notifications.php?last_id=${lastId}`);
+                        const data = await res.json();
+                        if (data && data.id) {
+                            localStorage.setItem('last_notify_id', data.id);
+                            if (Notification.permission === 'granted') {
+                                const n = new Notification(data.title, {
+                                    body: data.body,
+                                    icon: data.icon || 'assets/images/logo.png'
+                                });
+                                n.onclick = () => {
+                                    window.focus();
+                                    if (data.url) window.location.href = data.url;
+                                };
+                            }
+                        }
+                    } catch (e) {}
+                }
+
+                setInterval(checkNewNotifications, 15000); // Check every 15s
+
+                // Initial request if sw exists
+                if (Notification.permission === 'granted') {
+                    registerServiceWorker();
+                }
 
                 // Sync navigation when HTMX changes the URL or content
                 const syncNav = () => {
