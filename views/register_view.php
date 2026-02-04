@@ -23,14 +23,26 @@
                            placeholder="To'liq ismingiz"
                            class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-black transition-all font-medium">
                     
-                    <div class="relative">
-                        <span class="absolute left-6 top-4 text-gray-900 font-medium pointer-events-none select-none">+998</span>
+                    <div class="relative" x-data="{ 
+                        phone: '+998 ',
+                        formatPhone(val) {
+                            let cleared = val.replace(/[^\d]/g, '');
+                            if (!cleared.startsWith('998')) cleared = '998' + cleared;
+                            cleared = cleared.substring(0, 12);
+                            let formatted = '+998';
+                            if (cleared.length > 3) formatted += ' ' + cleared.substring(3, 5);
+                            if (cleared.length > 5) formatted += ' ' + cleared.substring(5, 8);
+                            if (cleared.length > 8) formatted += ' ' + cleared.substring(8, 10);
+                            if (cleared.length > 10) formatted += ' ' + cleared.substring(10, 12);
+                            this.phone = formatted;
+                        }
+                    }">
                         <input type="tel" name="phone" required 
+                               x-model="phone"
+                               @input="formatPhone($event.target.value)"
+                               @keydown="if ($event.key === 'Backspace' && phone.length <= 5) $event.preventDefault()"
                                placeholder="+998 XX XXX XX XX"
-                               maxlength="9"
-                               pattern="[0-9]{9}"
-                               oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 9)"
-                               class="w-full bg-gray-50 border-none rounded-2xl pl-20 pr-6 py-4 outline-none focus:ring-2 focus:ring-black transition-all font-medium">
+                               class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-black transition-all font-medium">
                     </div>
                     
                     <div class="relative" x-data="{ show: false }">

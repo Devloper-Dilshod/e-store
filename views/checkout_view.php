@@ -26,10 +26,43 @@
                       class="w-full bg-slate-50 border-none rounded-[1.5rem] px-6 py-4 outline-none focus:ring-2 focus:ring-black transition-all min-h-[120px] font-medium"></textarea>
         </div>
 
-        <div class="space-y-2">
+        <div class="space-y-2" x-data="{ 
+            phone: '<?= htmlspecialchars($user['phone'] ?? '+998') ?>',
+            formatPhone(val) {
+                // Remove all non-numeric chars except the leading +
+                let cleared = val.replace(/[^\d]/g, '');
+                
+                // Ensure it starts with 998
+                if (!cleared.startsWith('998')) {
+                    cleared = '998' + cleared;
+                }
+                
+                // Limit to 12 digits (998 + 9 digits)
+                cleared = cleared.substring(0, 12);
+                
+                // Format: +998 XX XXX XX XX
+                let formatted = '+998';
+                if (cleared.length > 3) {
+                    formatted += ' ' + cleared.substring(3, 5);
+                }
+                if (cleared.length > 5) {
+                    formatted += ' ' + cleared.substring(5, 8);
+                }
+                if (cleared.length > 8) {
+                    formatted += ' ' + cleared.substring(8, 10);
+                }
+                if (cleared.length > 10) {
+                    formatted += ' ' + cleared.substring(10, 12);
+                }
+                
+                this.phone = formatted;
+            }
+        }">
             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-4">Telefon raqam</label>
             <input type="tel" name="phone" required 
-                   value="<?= htmlspecialchars($user['phone'] ?? '+998') ?>"
+                   x-model="phone"
+                   @input="formatPhone($event.target.value)"
+                   @keydown="if ($event.key === 'Backspace' && phone.length <= 4) $event.preventDefault()"
                    placeholder="+998 90 123 45 67"
                    class="w-full bg-slate-50 border-none rounded-[1.5rem] px-6 py-4 outline-none focus:ring-2 focus:ring-black transition-all font-medium">
         </div>
