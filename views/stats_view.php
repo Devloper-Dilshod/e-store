@@ -62,32 +62,41 @@
         </div>
 
         <div class="grid gap-4">
-            <?php foreach($orders as $order): ?>
-            <div class="glass p-5 rounded-[2rem] border border-white/60 flex items-center justify-between group hover:border-slate-300 transition-all duration-500">
-                <div class="flex items-center gap-5">
-                    <div class="w-14 h-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-900 font-black text-xs shadow-sm group-hover:scale-110 transition">
+            <?php foreach($orders as $order): 
+                $status_map = [
+                    'pending' => ['label' => 'Kutilmoqda', 'class' => 'bg-orange-50 text-orange-600 border-orange-100'],
+                    'accepted' => ['label' => 'Tasdiqlandi', 'class' => 'bg-green-50 text-green-600 border-green-100'],
+                    'completed' => ['label' => 'Yetkazildi', 'class' => 'bg-blue-50 text-blue-600 border-blue-100'],
+                    'cancelled' => ['label' => 'Bekor qilindi', 'class' => 'bg-red-50 text-red-600 border-red-100'],
+                    'rejected' => ['label' => 'Rad etildi', 'class' => 'bg-red-50 text-red-600 border-red-100']
+                ];
+                $s = $status_map[$order['status']] ?? ['label' => $order['status'], 'class' => 'bg-slate-50 text-slate-600 border-slate-100'];
+            ?>
+            <div class="glass p-4 md:p-5 rounded-[2.5rem] border border-white/60 flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:border-slate-300 transition-all duration-500">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-900 font-black text-[10px] shadow-sm group-hover:scale-110 transition shrink-0">
                         #<?= $order['id'] ?>
                     </div>
-                    <div>
-                        <div class="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5"><?= date('d.m.Y H:i', strtotime($order['created_at'])) ?></div>
-                        <h4 class="text-base font-black text-slate-900 tracking-tight leading-none"><?= htmlspecialchars($order['customer_name'] ?: 'Noma'lum') ?></h4>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase mt-1"><?= $order['customer_phone'] ?></p>
+                    <div class="min-w-0">
+                        <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5"><?= date('d.m.Y H:i', strtotime($order['created_at'])) ?></div>
+                        <h4 class="text-sm md:text-base font-black text-slate-900 tracking-tight leading-none truncate"><?= htmlspecialchars($order['customer_name'] ?: 'Noma'lum') ?></h4>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase mt-1"><?= $order['customer_phone'] ?></p>
                     </div>
                 </div>
 
-                <div class="text-right flex items-center gap-8">
-                    <div>
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Summa</p>
-                        <p class="text-lg font-black text-slate-900 leading-none"><?= number_format($order['total_price'], 0, ',', ' ') ?> <span class="text-[10px] opacity-50">so'm</span></p>
+                <div class="flex items-center justify-between md:justify-end gap-4 md:gap-8 border-t md:border-t-0 border-slate-100 pt-3 md:pt-0">
+                    <div class="text-left md:text-right">
+                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Summa</p>
+                        <p class="text-base md:text-lg font-black text-slate-900 leading-none"><?= number_format($order['total_price'], 0, ',', ' ') ?> <span class="text-[9px] opacity-50">sh.</span></p>
                     </div>
-                    <div class="hidden md:block">
-                        <span class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 <?= $order['status'] == 'completed' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600' ?>">
-                            <?= $order['status'] ?>
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-widest border <?= $s['class'] ?>">
+                            <?= $s['label'] ?>
                         </span>
+                        <a hx-get="profile.php" hx-target="#page-content" class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-black hover:text-white transition-all cursor-pointer shrink-0 active:scale-90">
+                            <svg class="w-5 h-5 font-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
+                        </a>
                     </div>
-                    <a hx-get="profile.php" hx-target="#page-content" class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-black hover:text-white transition-all cursor-pointer">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
-                    </a>
                 </div>
             </div>
             <?php endforeach; ?>

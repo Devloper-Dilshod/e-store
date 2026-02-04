@@ -10,7 +10,7 @@ $limit = 30;
 $offset = ($page - 1) * $limit;
 
 $params = [];
-$sql = "SELECT * FROM products WHERE 1=1";
+$sql = "SELECT *, (SELECT COUNT(*) FROM product_variants WHERE product_id = products.id) as variant_count FROM products WHERE 1=1";
 
 if ($query) {
     $sql .= " AND (name LIKE ? OR description LIKE ?)";
@@ -28,8 +28,11 @@ if ($sort === 'discount') {
     $sql .= " AND has_discount = 1";
 }
 
-// Count for pagination
-$count_sql = str_replace("SELECT *", "SELECT COUNT(*)", $sql);
+// Count for pagination (cleaner approach)
+$count_sql = "SELECT COUNT(*) FROM products WHERE 1=1";
+if ($query) $count_sql .= " AND (name LIKE ? OR description LIKE ?)";
+if ($cat_id) $count_sql .= " AND category_id = ?";
+if ($sort === 'discount') $count_sql .= " AND has_discount = 1";
 $stmt = $pdo->prepare($count_sql);
 $stmt->execute($params);
 $total_items = $stmt->fetchColumn();

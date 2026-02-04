@@ -24,7 +24,16 @@
         .glass { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.4); }
         .glass-dark { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
         
+        /* Mobile Enhancements */
+        @media (max-width: 640px) {
+            * { -webkit-tap-highlight-color: transparent; }
+            .glass { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        }
+        
+        button, a { touch-action: manipulation; }
+        
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         [x-cloak] { display: none !important; }
         
         /* HTMX Transitions */
