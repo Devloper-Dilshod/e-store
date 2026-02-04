@@ -18,7 +18,7 @@ if (php_sapi_name() !== 'cli' && basename($_SERVER['PHP_SELF']) !== 'image.php')
 $db_file = __DIR__ . '/../protected/data/database.sqlite';
 
 // 3. Telegram API
-$telegram_bot_token = '8296282827:AAHDwFHR9Vj3WOGSsFsrWO4qMJk-BU5kmvY';
+$telegram_bot_token = 'BOT_TOKEN';
 $admin_chat_id = '7445142075'; 
 $store_name = 'G Store'; // Do'kon nomi shu yerda o'zgartiriladi
 
