@@ -131,7 +131,7 @@
                     } catch (e) {}
                 }
 
-                setInterval(checkNewNotifications, 15000); // Check every 15s
+                setInterval(checkNewNotifications, 10000); // Check every 10s
 
                 // Initial request if sw exists
                 if (Notification.permission === 'granted') {

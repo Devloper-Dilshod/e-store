@@ -222,38 +222,17 @@ function broadcastToAll($text, $file_id = null, $url = null) {
     // A. Internal Web Notifications (Picked up by polling)
     $stmt = $pdo->prepare("INSERT INTO notifications (title, body, icon, url) VALUES (?, ?, ?, ?)");
     $title = str_contains($text, 'CHEGIRMA') ? '🔥 KATTA CHEGIRMA!' : '🆕 YANGI MAHSULOT!';
-    $clean_body = strip_tags(str_replace(['<br>', '<br/>', '\n'], ' ', $text));
+    
+    // Clean up message for web display
+    $clean_body = strip_tags(str_replace(['<br>', '<br/>', "\n"], ' ', $text));
+    $clean_body = str_replace('🔗 Batafsil ko\'rish', '', $clean_body);
+    $clean_body = str_replace('🔗 Hoziroq sotib olish', '', $clean_body);
+    
     $stmt->execute([
         $title,
-        mb_substr($clean_body, 0, 100),
+        mb_substr(trim($clean_body), 0, 150),
         $file_id ? "image.php?id=$file_id" : 'assets/images/logo.png',
         $url
     ]);
-
-    // B. Telegram Broadcast
-    // Get all chat_ids from bot_state (users who interacted)
-    $stmt = $pdo->query("SELECT chat_id FROM bot_state");
-    $chat_ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
-    
-    foreach ($chat_ids as $chat_id) {
-        try {
-            if ($file_id) {
-                sendTelegram('sendPhoto', [
-                    'chat_id' => $chat_id,
-                    'photo' => $file_id,
-                    'caption' => $text,
-                    'parse_mode' => 'HTML'
-                ]);
-            } else {
-                sendTelegram('sendMessage', [
-                    'chat_id' => $chat_id,
-                    'text' => $text,
-                    'parse_mode' => 'HTML'
-                ]);
-            }
-        } catch (Exception $e) {
-            error_log("Broadcast failed for $chat_id: " . $e->getMessage());
-        }
-    }
 }
  ?>
