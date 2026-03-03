@@ -9,16 +9,19 @@ function handleUpdate($update) {
         $photo = $msg['photo'] ?? null;
 
         if (!isUserAdmin($chat_id)) {
-            // Regular user - just prompt to use web app
+            // Regular user - show giant WebApp reply keyboard
             $webapp_url = getSetting('webapp_url', '');
             if ($webapp_url) {
                 sendTelegram('sendMessage', [
                     'chat_id' => $chat_id,
-                    'text' => "🛍 <b>Do'konimizga xush kelibsiz!</b>\n\nMahsulotlarni ko'rish va buyurtma berish uchun quyidagi tugmani bosing:",
+                    'text' => "🛍 <b>Do'konimizga xush kelibsiz!</b>\n\nQuyidagi tugma orqali do'konimizga kiring:",
                     'parse_mode' => 'HTML',
-                    'reply_markup' => json_encode(['inline_keyboard' => [
-                        [['text' => '🛍 Do\'konni ochish', 'web_app' => ['url' => $webapp_url]]]
-                    ]])
+                    'reply_markup' => json_encode([
+                        'keyboard' => [
+                            [['text' => "🛒 Do'konni ochish", 'web_app' => ['url' => $webapp_url]]]
+                        ],
+                        'resize_keyboard' => true
+                    ])
                 ]);
             } else {
                 sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "🛍 Xush kelibsiz! Admin bilan bog'laning."]);
@@ -325,7 +328,14 @@ function handleMainMenu($chat_id, $text) {
 }
 
 function showMainMenu($chat_id) {
-    $kb = ['keyboard' => [
+    $webapp_url = getSetting('webapp_url', '');
+    $kb = ['keyboard' => [], 'resize_keyboard' => true];
+    
+    if ($webapp_url) {
+        $kb['keyboard'][] = [['text' => "🛒 Do'konni ochish (Web App)", 'web_app' => ['url' => $webapp_url]]];
+    }
+    
+    $kb['keyboard'] = array_merge($kb['keyboard'], [
         [['text' => '👕 Mahsulotlar'], ['text' => '📦 Buyurtmalar']],
         [['text' => '➕ Mahsulot qo\'shish'], ['text' => '📂 Kategoriya qo\'shish']],
         [['text' => '📝 Tahrirlash'], ['text' => '🔍 Qidiruv']],
@@ -333,7 +343,8 @@ function showMainMenu($chat_id) {
         [['text' => '👥 Adminlar'], ['text' => '⚙️ Sozlamalar']],
         [['text' => '👤 Foydalanuvchilar'], ['text' => '🚫 Bloklash']],
         [['text' => '🗑 O\'chirish']]
-    ], 'resize_keyboard' => true];
+    ]);
+    
     sendTelegram('sendMessage', ['chat_id' => $chat_id, 'text' => "🛠 <b>ADMIN PANEL</b>", 'parse_mode' => 'HTML', 'reply_markup' => json_encode($kb)]);
 }
 
