@@ -11,7 +11,17 @@
     <script defer src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/collapse.min.js"></script>
     <script src="//unpkg.com/alpinejs" defer></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        const tg = window.Telegram?.WebApp;
+        if (!tg || !tg.initData) {
+            document.documentElement.innerHTML = '<body style="margin:0;padding:20px;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f8fafc;font-family:sans-serif;text-align:center;"><div style="background:#fff;padding:40px;border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,0.05);"><div style="font-size:48px;margin-bottom:16px;">🤖</div><h2 style="margin:0 0 8px;font-size:20px;color:#0f172a;">Faqat Telegram orqali</h2><p style="margin:0;color:#64748b;font-size:14px;line-height:1.5;">Bu sayt faqat Telegram bot ichidagi<br>Web App orqali ishlaydi.</p></div></body>';
+            window.stop();
+        } else if (['web', 'weba', 'webk'].includes(tg.platform)) {
+            document.documentElement.innerHTML = '<body style="margin:0;padding:20px;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f8fafc;font-family:sans-serif;text-align:center;"><div style="background:#fff;padding:40px;border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,0.05);"><div style="font-size:48px;margin-bottom:16px;">📱</div><h2 style="margin:0 0 8px;font-size:20px;color:#0f172a;">Faqat mobil ilova orqali</h2><p style="margin:0;color:#64748b;font-size:14px;line-height:1.5;">Web versiyadan foydalanish taqiqlangan.<br>Iltimos, mobil ilovadan kiring.</p></div></body>';
+            window.stop();
+        }
+    </script>
     <style>
         :root { --accent: #000; --bg: #f8fafc; }
         html, body { margin: 0; padding: 0; min-height: 100vh; width: 100%; overflow-x: hidden; scroll-behavior: smooth; }

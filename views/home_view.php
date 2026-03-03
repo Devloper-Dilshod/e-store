@@ -26,7 +26,7 @@
         <?php foreach($categories as $c): ?>
         <a hx-get="search.php?cat=<?= $c['id'] ?>" hx-target="#page-content" hx-push-url="true" class="shrink-0 flex items-center gap-4 bg-white border border-slate-100 text-slate-900 px-6 py-4 rounded-2xl shadow-sm cursor-pointer hover:border-black hover:shadow-xl transition-all active:scale-95">
             <?php if($c['file_id']): ?>
-                <img src="image.php?id=<?= $c['file_id'] ?>" class="w-8 h-8 object-cover rounded-xl" alt="<?= $c['name'] ?>">
+                <img src="<?= get_image_url($c['image_path'] ?? $c['file_id'] ?? '') ?>" class="w-8 h-8 object-cover rounded-xl" alt="<?= htmlspecialchars($c['name']) ?>">
             <?php endif; ?>
             <span class="font-black text-sm uppercase"><?= $c['name'] ?></span>
         </a>
@@ -64,7 +64,7 @@
            x-data="{ imgLoaded: false }"
            class="poster-card snap-center shrink-0 w-[95%] md:w-[900px] aspect-[3/2] md:aspect-[21/9] bg-white rounded-[3rem] overflow-hidden shadow-2xl relative group border border-white/50 block animate__animated animate__fadeIn cursor-pointer transition-transform active:scale-[0.98]">
             <div class="absolute inset-0 bg-slate-100 animate-pulse" x-show="!imgLoaded"></div>
-            <img src="image.php?id=<?= $p['file_id'] ?>" 
+            <img src="<?= get_image_url($p['image_path'] ?? $p['file_id'] ?? '') ?>" 
                  @load="imgLoaded = true" 
                  class="w-full h-full object-cover transition duration-1000 group-hover:scale-105" alt="Banner">
             

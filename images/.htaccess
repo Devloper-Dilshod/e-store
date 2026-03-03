@@ -1,0 +1,5 @@
+Options -Indexes
+# Prevent access to PHP files in images directory
+<Files "*.php">
+  Deny from all
+</Files>

@@ -18,7 +18,7 @@
                     <div class="glass p-4 md:p-5 rounded-3xl border border-white/50 flex gap-4 items-center hover:border-slate-200 transition">
                         <div class="w-20 h-20 md:w-24 md:h-24 bg-white rounded-2xl overflow-hidden shrink-0 border border-slate-100 p-2">
                             <?php if($item['image_id']): ?>
-                                <img src="image.php?id=<?= $item['image_id'] ?>" class="w-full h-full object-contain">
+                                <img src="<?= get_image_url($item['image_id'] ?? '') ?>" class="w-full h-full object-contain" onerror="this.src='assets/images/placeholder.png'">
                             <?php endif; ?>
                         </div>
                         <div class="flex-1 min-w-0">

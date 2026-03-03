@@ -22,11 +22,12 @@
                 </div>
                 <?php endif; ?>
 
-                <img src="image.php?id=<?= $p['file_id'] ?>" 
+                <img src="<?= get_image_url($p['image_path'] ?? $p['file_id'] ?? '') ?>" 
                      @load="prodLoaded = true" 
                      class="w-full h-full object-contain group-hover:scale-110 transition duration-1000 ease-out relative z-10" 
                      :class="prodLoaded ? 'opacity-100' : 'opacity-0'"
-                     loading="lazy" alt="<?= $p['name'] ?>">
+                     loading="lazy" alt="<?= htmlspecialchars($p['name']) ?>"
+                     onerror="this.src='assets/images/placeholder.png'">
             </div>
         </a>
         

@@ -13,7 +13,7 @@
     discountPercent: <?= (int)$product['discount_percent'] ?>,
     basePrice: <?= $product['base_price'] ?>,
     currentPrice: <?= count($variants) > 0 ? $variants[0]['price'] : $product['base_price'] ?>,
-    currentImage: 'image.php?id=<?= (count($variants) > 0 && $variants[0]['file_id']) ? $variants[0]['file_id'] : $product['file_id'] ?>',
+    currentImage: '<?= get_image_url((count($variants) > 0 && ($variants[0]['image_path'] ?? $variants[0]['file_id'] ?? null)) ? ($variants[0]['image_path'] ?? $variants[0]['file_id']) : ($product['image_path'] ?? $product['file_id'] ?? '')) ?>',
     showViewer: false,
     loaded: false,
     
@@ -29,7 +29,7 @@
         this.currentPrice = price;
         if(imgId) {
             this.loaded = false;
-            this.currentImage = 'image.php?id=' + imgId;
+            this.currentImage = imgId;
         }
     }
 }">
@@ -63,10 +63,11 @@
             <!-- Thumbnail Gallery -->
             <div class="flex gap-4 overflow-x-auto py-2 no-scrollbar">
                 <?php foreach($gallery as $img): if(!$img) continue; ?>
-                <button @click="currentImage='image.php?id=<?= $img ?>'; loaded=false" 
+                <?php $img_url = get_image_url($img); ?>
+                <button @click="currentImage='<?= $img_url ?>'; loaded=false" 
                         class="w-20 h-20 rounded-2xl glass border-2 transition-all p-1.5 shrink-0"
-                        :class="currentImage.includes('<?= $img ?>') ? 'border-black' : 'border-transparent opacity-60 hover:opacity-100'">
-                    <img src="image.php?id=<?= $img ?>" class="w-full h-full object-contain rounded-xl">
+                        :class="currentImage === '<?= $img_url ?>' ? 'border-black' : 'border-transparent opacity-60 hover:opacity-100'">
+                    <img src="<?= $img_url ?>" class="w-full h-full object-contain rounded-xl" onerror="this.src='assets/images/placeholder.png'">
                 </button>
                 <?php endforeach; ?>
             </div>
@@ -108,7 +109,7 @@
                 <div class="flex flex-wrap gap-2">
                     <?php foreach($variants as $idx => $v): ?>
                     <button 
-                        @click="updateVariant(<?= $v['id'] ?>, <?= $v['price'] ?>, '<?= $v['file_id'] ?>')"
+                        @click="updateVariant(<?= $v['id'] ?>, <?= $v['price'] ?>, '<?= get_image_url($v['image_path'] ?? $v['file_id'] ?? '') ?>')"
                         :class="selectedVariant == <?= $v['id'] ?> ? 'bg-black text-white shadow-xl shadow-black/20' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-100'"
                         class="px-6 py-4 rounded-2xl font-black transition-all duration-300 text-xs uppercase tracking-tight active:scale-95">
                         <?= ($idx === 0 && count($variants) > 1 && empty($v['variant_name'])) ? 'Oddiy' : htmlspecialchars($v['variant_name']) ?>

@@ -2,22 +2,28 @@
 require_once 'core/config.php';
 require_once 'core/render.php';
 
-$id = $_GET['id'] ?? 0;
-$stmt = $pdo->prepare("SELECT * FROM products WHERE id = ?");
+$id = (int)($_GET['id'] ?? 0);
+if (!$id) { header("Location: index.php"); exit; }
+
+$stmt = $pdo->prepare("SELECT * FROM products WHERE id=?");
 $stmt->execute([$id]);
 $product = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$product) { header("Location: index.php"); exit; }
 
-$stmt = $pdo->prepare("SELECT * FROM product_variants WHERE product_id = ?");
+$stmt = $pdo->prepare("SELECT * FROM product_variants WHERE product_id=?");
 $stmt->execute([$id]);
 $variants = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Gallery
+// Gallery - support both image_path and legacy file_id
 $gallery = [];
-if($product['file_id']) $gallery[] = $product['file_id'];
-foreach($variants as $v) if($v['file_id'] && !in_array($v['file_id'], $gallery)) $gallery[] = $v['file_id'];
-if(empty($gallery)) $gallery[] = null;
+$prod_img = $product['image_path'] ?? $product['file_id'] ?? null;
+if ($prod_img) $gallery[] = $prod_img;
+foreach ($variants as $v) {
+    $v_img = $v['image_path'] ?? $v['file_id'] ?? null;
+    if ($v_img && !in_array($v_img, $gallery)) $gallery[] = $v_img;
+}
+if (empty($gallery)) $gallery[] = null;
 
 render_page('product_view.php', ['product' => $product, 'variants' => $variants, 'gallery' => $gallery]);
 ?>
